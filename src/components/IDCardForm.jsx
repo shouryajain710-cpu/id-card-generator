@@ -2,40 +2,33 @@ import { useState, useEffect } from "react";
 import PhotoUploader from "./PhotoUploader";
 import PhotoEditor from "./PhotoEditor";
 
-/**
- * IDCardForm
- * Renders every input for the ID card. It does NOT own the top-level form
- * state — App.jsx does — this component binds inputs to `formData` and
- * forwards changes up through `onChange`/`onImageSelect`/`onPreviewChange`.
- * That's what makes swapping App's useState for a Zustand store later a
- * no-op for this file: the props going up to App stay the same shape
- * either way.
- *
- * Photo editing lives entirely inside this component: it holds the
- * just-selected raw file (which drives whether PhotoEditor is open) and
- * the final processed photo, then forwards the processed result up via
- * the *same* onImageSelect/onPreviewChange props App already had — so
- * App.jsx doesn't need to know cropping exists.
- */
+const DESIGNATION_PRESETS = [
+  { label: "Web Developer", value: "Web Developer" },
+  { label: "AI / ML", value: "AI / ML" },
+  { label: "Data Analytics", value: "Data Analytics" },
+  { label: "UI / UX", value: "UI / UX Designer" },
+  { label: "Cybersecurity", value: "Cybersecurity" },
+];
+
 export default function IDCardForm({
   formData,
   onChange,
   onImageSelect,
   onPreviewChange,
+  section = "all",
 }) {
-  const [rawFile, setRawFile] = useState(null); // truthy => PhotoEditor is open
-  const [processedPhoto, setProcessedPhoto] = useState(null); // { file, url } | null
+  const [rawFile, setRawFile] = useState(null);
+  const [processedPhoto, setProcessedPhoto] = useState(null);
 
-  // Single owner of the processed-image object URL: created together with
-  // the file so they're always in sync, revoked on replace and on unmount.
   useEffect(() => {
     onImageSelect?.(processedPhoto?.file ?? null);
     onPreviewChange?.(processedPhoto?.url ?? null);
 
     return () => {
-      if (processedPhoto?.url) URL.revokeObjectURL(processedPhoto.url);
+      if (processedPhoto?.url) {
+        URL.revokeObjectURL(processedPhoto.url);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processedPhoto]);
 
   const handleRawSelect = (file) => {
@@ -43,11 +36,21 @@ export default function IDCardForm({
   };
 
   const handleEditorApply = (blob) => {
-    const file = new File([blob], `cropped-${rawFile?.name ?? "photo.jpg"}`, {
-      type: blob.type,
-    });
+    const file = new File(
+      [blob],
+      `cropped-${rawFile?.name ?? "photo.jpg"}`,
+      {
+        type: blob.type,
+      }
+    );
+
     const url = URL.createObjectURL(file);
-    setProcessedPhoto({ file, url });
+
+    setProcessedPhoto({
+      file,
+      url,
+    });
+
     setRawFile(null);
   };
 
@@ -59,40 +62,44 @@ export default function IDCardForm({
     setProcessedPhoto(null);
   };
 
+  const handlePresetSelect = (value) => {
+    onChange({
+      target: {
+        name: "designation",
+        value,
+      },
+    });
+  };
+
+  const showLeft = section === "left" || section === "all";
+  const showRight = section === "right" || section === "all";
+
   return (
-    <div className="w-full rounded-2xl border border-forest/10 bg-white p-6 shadow-sm sm:p-8">
-      {/* STEP 01 — Photo */}
-      <div className="mb-8">
-        <div className="mb-4 flex items-baseline gap-2">
-          <span className="font-mono text-xs font-bold tracking-widest text-flamingo">
-            STEP 01
-          </span>
-          <h2 className="font-display text-xl text-ink">Upload your photo</h2>
-        </div>
+    <>
+      {showLeft && (
+        <div className="space-y-6">
+          {/* STEP 01 */}
+          <section>
+            <SectionTitle number="01" title="Upload your photo" />
 
-        <PhotoUploader
-          onImageSelect={handleRawSelect}
-          onRemove={handleRemovePhoto}
-          previewUrl={processedPhoto?.url ?? null}
-          fileName={processedPhoto?.file?.name}
-          fileSize={processedPhoto?.file?.size}
-        />
+            <PhotoUploader
+              onImageSelect={handleRawSelect}
+              onRemove={handleRemovePhoto}
+              previewUrl={processedPhoto?.url ?? null}
+              fileName={processedPhoto?.file?.name}
+              fileSize={processedPhoto?.file?.size}
+            />
 
-        {rawFile && (
-          <PhotoEditor file={rawFile} onApply={handleEditorApply} onCancel={handleEditorCancel} />
-        )}
-      </div>
+            {rawFile && (
+              <PhotoEditor
+                file={rawFile}
+                onApply={handleEditorApply}
+                onCancel={handleEditorCancel}
+              />
+            )}
+          </section>
 
-      {/* STEP 02 — Details */}
-      <div>
-        <div className="mb-5 flex items-baseline gap-2">
-          <span className="font-mono text-xs font-bold tracking-widest text-flamingo">
-            STEP 02
-          </span>
-          <h2 className="font-display text-xl text-ink">Enter your details</h2>
-        </div>
-
-        <div className="space-y-4">
+          {/* Name */}
           <Field
             label="Full Name"
             name="fullName"
@@ -102,6 +109,7 @@ export default function IDCardForm({
             required
           />
 
+          {/* ID */}
           <Field
             label="ID Number"
             name="idNumber"
@@ -110,56 +118,104 @@ export default function IDCardForm({
             placeholder="HHG26-00123"
             required
           />
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field
-              label="Designation / Role"
-              name="designation"
-              value={formData.designation}
-              onChange={onChange}
-              placeholder="Web Developer"
-            />
-            <Field
-              label="Department"
-              name="department"
-              value={formData.department}
-              onChange={onChange}
-              placeholder="Engineering"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field
-              label="Phone Number"
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={onChange}
-              placeholder="+91 98765 43210"
-            />
-            <Field
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={onChange}
-              placeholder="you@email.com"
-            />
-          </div>
         </div>
-      </div>
+      )}
+
+      {showRight && (
+        <div className="space-y-6">
+          {/* STEP 02 */}
+          <section>
+            <SectionTitle number="02" title="Your role" />
+
+            <div>
+              <Field
+                label="Designation / Role"
+                name="designation"
+                value={formData.designation}
+                onChange={onChange}
+                placeholder="Web Developer"
+              />
+
+              <div className="mt-3">
+                <p className="mb-2 font-mono text-[10px] font-bold tracking-widest text-ink/40">
+                  QUICK SELECT
+                </p>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {DESIGNATION_PRESETS.map((preset) => {
+                    const isActive =
+                      formData.designation === preset.value;
+
+                    return (
+                      <button
+                        key={preset.value}
+                        type="button"
+                        onClick={() =>
+                          handlePresetSelect(preset.value)
+                        }
+                        aria-pressed={isActive}
+                        className={`rounded-full border px-2.5 py-1 font-mono text-[11px] font-bold transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mustard ${
+                          isActive
+                            ? "border-mustard bg-mustard text-ink"
+                            : "border-forest/15 bg-cream/40 text-ink/60 hover:border-mustard hover:text-ink"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Department */}
+          <Field
+            label="Department"
+            name="department"
+            value={formData.department}
+            onChange={onChange}
+            placeholder="Engineering"
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+function SectionTitle({ number, title }) {
+  return (
+    <div className="mb-4 flex items-baseline gap-2">
+      <span className="font-mono text-xs font-bold tracking-widest text-flamingo">
+        STEP {number}
+      </span>
+
+      <h2 className="font-display text-xl text-ink">
+        {title}
+      </h2>
     </div>
   );
 }
 
-/** Small shared input primitive so every field looks/behaves identically. */
-function Field({ label, name, value, onChange, type = "text", placeholder, required = false }) {
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  required = false,
+}) {
   return (
     <div>
-      <label htmlFor={name} className="mb-1.5 block font-mono text-xs font-bold text-ink/70">
+      <label
+        htmlFor={name}
+        className="mb-1.5 block font-mono text-xs font-bold text-ink/70"
+      >
         {label}
         {required && <span className="text-flamingo"> *</span>}
       </label>
+
       <input
         id={name}
         name={name}

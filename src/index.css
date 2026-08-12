@@ -1,10 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
 @import "tailwindcss";
+
+@theme {
+  --color-forest: #06452f;
+  --color-forest-dark: #003b27;
+  --color-forest-light: #12633f;
+
+  --color-mustard: #f5df00;
+  --color-flamingo: #ed1670;
+
+  --color-cream: #f7f0dc;
+  --color-white: #fffdf4;
+  --color-ink: #062d20;
+
+  --font-display: "Abril Fatface", serif;
+  --font-mono: "Space Mono", monospace;
+  --font-body: "Inter", sans-serif;
+}
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-forest-dark);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--color-flamingo);
+  color: var(--color-cream);
+}
+
+.vertical-nav {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transition: color 0.2s ease;
+}
+
+.vertical-nav:hover {
+  color: var(--color-mustard);
 }

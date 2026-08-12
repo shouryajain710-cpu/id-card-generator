@@ -1,25 +1,8 @@
-<<<<<<< HEAD
-@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
-=======
 @import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
->>>>>>> new
 
 @import "tailwindcss";
 
 @theme {
-<<<<<<< HEAD
-  --color-forest: #1B4332;
-  --color-forest-dark: #122E22;
-  --color-forest-light: #26593F;
-
-  --color-mustard: #F2C230;
-  --color-mustard-light: #F7D766;
-
-  --color-flamingo: #EC2C82;
-
-  --color-ink: #0E1F17;
-  --color-cream: #FBF3DD;
-=======
   --color-forest: #06452f;
   --color-forest-dark: #003b27;
   --color-forest-light: #12633f;
@@ -30,7 +13,6 @@
   --color-cream: #f7f0dc;
   --color-white: #fffdf4;
   --color-ink: #062d20;
->>>>>>> new
 
   --font-display: "Abril Fatface", serif;
   --font-mono: "Space Mono", monospace;
@@ -47,9 +29,6 @@ html {
 
 body {
   margin: 0;
-<<<<<<< HEAD
-  font-family: var(--font-body);
-=======
   background: var(--color-forest-dark);
   color: var(--color-ink);
   font-family: var(--font-body);
@@ -78,5 +57,4 @@ a {
 
 .vertical-nav:hover {
   color: var(--color-mustard);
->>>>>>> new
 }

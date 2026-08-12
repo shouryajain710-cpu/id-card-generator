@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   User,
   Briefcase,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
+
 
 import { formatName } from "../utils/formatName";
 import {
@@ -24,9 +25,17 @@ export default function IDCardPreview({
   const [side, setSide] = useState("front");
   const [downloadSide, setDownloadSide] = useState("front");
   const [isDownloading, setIsDownloading] = useState(false);
-
+  const [animationKey, setAnimationKey] = useState(0);
   const frontRef = useRef(null);
   const backRef = useRef(null);
+
+  // Replay the hanging-card animation when a new processed photo appears.
+  // Typing into the form does not restart the animation.
+  useEffect(() => {
+    if (photoPreviewUrl) {
+      setAnimationKey((key) => key + 1);
+    }
+  }, [photoPreviewUrl]);
 
   const fullName = data.fullName?.trim()
     ? formatName(data.fullName)
@@ -301,24 +310,52 @@ ctx.drawImage(
       ========================================== */}
 
       <div
-        role="button"
-        tabIndex={0}
-        aria-label="Flip ID card"
-        onClick={handleFlip}
-        onKeyDown={handleCardKeyDown}
-        className="
-          relative
-          aspect-[5/8]
-          w-full
-          max-w-xs
-          cursor-pointer
-          [perspective:1200px]
-          focus-visible:outline-none
-          focus-visible:ring-2
-          focus-visible:ring-mustard
-          focus-visible:ring-offset-4
-        "
+        key={animationKey}
+        className="id-card-hanging-rig relative w-full max-w-xs pt-[clamp(7rem,18vh,13rem)]"
       >
+        {/* PREVIEW-ONLY LANYARD
+            This sits outside frontRef/backRef, so it is never exported. */}
+        <div
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top:clamp(-17rem,-24vh,-9rem)
+            z-0
+            h-[calc(clamp(7rem,18vh,13rem) + clamp(9rem,24vh,17rem))]
+            w-5
+            -translate-x-1/2
+            rounded-b-md
+            border-x-2
+            border-ink/20
+            bg-gradient-to-r
+            from-forest-light
+            via-forest
+            to-forest-light
+            shadow-sm
+          "
+        />
+
+        {/* EXISTING ID CARD / FLIP AREA */}
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Flip ID card"
+          onClick={handleFlip}
+          onKeyDown={handleCardKeyDown}
+          className="
+            relative
+            aspect-[5/8]
+            w-full
+            cursor-pointer
+            [perspective:1200px]
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-mustard
+            focus-visible:ring-offset-4
+          "
+        >
         <div
           className={`
             relative
@@ -356,13 +393,15 @@ ctx.drawImage(
               [backface-visibility:hidden]
             "
           >
-            <FrontFace
-              fullName={fullName}
-              designation={designation}
-              idNumber={idNumber}
-              department={department}
-              photoPreviewUrl={photoPreviewUrl}
-            />
+            <div className="id-card-content-reveal h-full w-full">
+              <FrontFace
+                fullName={fullName}
+                designation={designation}
+                idNumber={idNumber}
+                department={department}
+                photoPreviewUrl={photoPreviewUrl}
+              />
+            </div>
           </div>
 
           {/* =====================================
@@ -393,7 +432,63 @@ ctx.drawImage(
           </div>
 
         </div>
+        </div>
       </div>
+
+      {/* Hanging-card animation */}
+      <style>{`
+        .id-card-hanging-rig {
+          transform-origin: top center;
+          animation: hhgoa-card-fall 900ms cubic-bezier(0.22, 0.8, 0.25, 1) both;
+          will-change: transform, opacity;
+        }
+
+        @keyframes hhgoa-card-fall {
+          0% {
+            opacity: 0;
+            transform: translateY(-420px);
+          }
+
+          70% {
+            opacity: 1;
+            transform: translateY(10px);
+          }
+
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /*
+          The card lands first, then its visible contents reveal
+          from the top edge toward the bottom.
+        */
+        .id-card-content-reveal {
+          animation: hhgoa-content-reveal 700ms ease-out 450ms both;
+          will-change: clip-path, opacity, transform;
+        }
+
+        @keyframes hhgoa-content-reveal {
+          0% {
+            opacity: 0;
+            clip-path: inset(0 0 100% 0);
+            transform: translateY(-8px);
+          }
+
+          100% {
+            opacity: 1;
+            clip-path: inset(0 0 0 0);
+            transform: translateY(0);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .id-card-hanging-rig {
+            animation: none;
+          }
+        }
+      `}</style>
 
       {/* Flip hint */}
 

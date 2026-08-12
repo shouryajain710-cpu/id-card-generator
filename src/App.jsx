@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import IDCardForm from "./components/IDCardForm";
 import IDCardPreview from "./components/IDCardPreview";
@@ -9,6 +10,16 @@ const initialFormData = {
   department: "",
   photo: null,
 };
+=======
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Sidebar from "./components/layout/Sidebar";
+import TopBar from "./components/layout/TopBar";
+import Footer from "./components/layout/Footer";
+
+import Home from "./pages/Home";
+import IDCreator from "./pages/IDCreator";
+>>>>>>> new
 
 function App() {
   const [formData, setFormData] = useState(initialFormData);
@@ -35,6 +46,7 @@ function App() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-cream px-4 py-10 sm:px-8 lg:px-10">
 
       {/* Header */}
@@ -81,6 +93,35 @@ function App() {
 
       </main>
     </div>
+=======
+    <BrowserRouter>
+
+      <Sidebar />
+
+      <div className="min-h-screen lg:pl-[80px]">
+
+        <TopBar />
+
+        <Routes>
+
+          <Route
+            path="/"
+            element={<Home />}
+          />
+
+          <Route
+            path="/create"
+            element={<IDCreator />}
+          />
+
+        </Routes>
+
+        <Footer />
+
+      </div>
+
+    </BrowserRouter>
+>>>>>>> new
   );
 }
 

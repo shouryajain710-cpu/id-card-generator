@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Bungee&family=Baloo+2:wght@600;700;800&family=Yatra+One&display=swap');
 
 @import "tailwindcss";
 
@@ -17,6 +17,16 @@
   --font-display: "Abril Fatface", serif;
   --font-mono: "Space Mono", monospace;
   --font-body: "Inter", sans-serif;
+
+  /* Bold street/graffiti wordmark font, used for "HACKER HOUSE" */
+  --font-graffiti: "Bungee", "Abril Fatface", cursive;
+
+  /* Bold Devanagari font for the Hindi "गोवा" wordmark */
+  --font-hindi: "Baloo 2", "Inter", sans-serif;
+
+  /* Bold single-weight Devanagari display font, used for the tilted
+     "गोवा" sticker badge — closest web-safe match to a brush/marker script. */
+  --font-hindi-script: "Yatra One", "Baloo 2", sans-serif;
 }
 
 * {
@@ -59,206 +69,113 @@ a {
   color: var(--color-mustard);
 }
 
-/* ================= FLOATING GOA STICKER ================= */
+/* ================= GRAFFITI TEXT SHADOW ================= */
+/* Layered spray-paint-style drop shadow for the "HACKER HOUSE" wordmark. */
+.text-shadow-graffiti {
+  text-shadow:
+    2px 2px 0 var(--color-flamingo),
+    4px 4px 0 rgba(6, 45, 32, 0.9),
+    6px 6px 14px rgba(0, 0, 0, 0.35);
+}
 
-.goa-sticker {
-  position: absolute;
-
-  /*
-    Adjust these if you want the sticker
-    slightly more left/right/up/down.
-  */
-  left: 50%;
-  top: 43%;
-
-  z-index: 5;
-
+/* ================= TYPEWRITER CURSOR ================= */
+.typewriter-cursor {
   display: inline-block;
-
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 5vw, 5rem);
-  line-height: 0.8;
-
-  color: var(--color-flamingo);
-
-  /* Makes it feel like a physical floating sticker */
-  filter: drop-shadow(4px 4px 0 #062d20);
-
-  transform-origin: center;
-
-  animation: goaStickerFloat 3.5s ease-in-out infinite;
+  width: 0.06em;
+  margin-left: 0.08em;
+  background: currentColor;
+  animation: hhgoa-cursor-blink 900ms steps(1) infinite;
 }
 
-@keyframes goaStickerFloat {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(-3deg);
+@keyframes hhgoa-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
   }
-
-  20% {
-    transform: translate3d(3px, -9px, 0) rotate(1deg);
-  }
-
-  45% {
-    transform: translate3d(-2px, -17px, 0) rotate(4deg);
-  }
-
-  70% {
-    transform: translate3d(2px, -8px, 0) rotate(0deg);
-  }
-
+  50%,
   100% {
-    transform: translate3d(0, 0, 0) rotate(-3deg);
+    opacity: 0;
   }
 }
 
-/* =====================================================
-   HOW IT WORKS — SCROLL REVEAL
-   ===================================================== */
-
-.step-cards {
-  position: relative;
-}
-
-
-/* =====================================================
-   DESKTOP
-   ===================================================== */
-
-@media (min-width: 768px) {
-
-  .step-cards > article {
-    position: relative;
-    will-change: transform, opacity;
-
-    animation-name: stepCardReveal;
-    animation-duration: 1ms;
-    animation-timing-function: linear;
-    animation-fill-mode: both;
-
-    /*
-      IMPORTANT:
-      The animation is controlled by scrolling,
-      NOT by page load.
-    */
-    animation-timeline: view(block);
+/* ================= HANGING LANYARD SWING ================= */
+/* Gentle pendulum sway for anything hanging from a lanyard/strip. */
+@keyframes hhgoa-lanyard-swing {
+  0%,
+  100% {
+    transform: rotate(-1.6deg);
   }
-
-
-  /*
-    CARD 01
-    Appears first.
-  */
-  .step-cards > article:nth-child(1) {
-    z-index: 3;
-
-    animation-range: entry 5% entry 45%;
-  }
-
-
-  /*
-    CARD 02
-    Starts slightly later.
-  */
-  .step-cards > article:nth-child(2) {
-    z-index: 2;
-
-    animation-range: entry 20% entry 60%;
-  }
-
-
-  /*
-    CARD 03
-    Starts after card 02.
-  */
-  .step-cards > article:nth-child(3) {
-    z-index: 1;
-
-    animation-range: entry 35% entry 75%;
-  }
-
-
-  @keyframes stepCardReveal {
-
-    from {
-      opacity: 0;
-      transform: translateY(70px) translateX(-70px) scale(0.94);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0) translateX(0) scale(1);
-    }
-
+  50% {
+    transform: rotate(1.6deg);
   }
 }
 
-
-/* =====================================================
-   MOBILE
-   ===================================================== */
-
-@media (max-width: 767px) {
-
-  .step-cards > article {
-
-    animation-name: mobileStepCardReveal;
-
-    animation-duration: 1ms;
-
-    animation-timing-function: linear;
-
-    animation-fill-mode: both;
-
-    /*
-      Animation starts when the individual card
-      enters the viewport.
-    */
-    animation-timeline: view(block);
-  }
-
-
-  .step-cards > article:nth-child(1) {
-    animation-range: entry 0% entry 40%;
-  }
-
-
-  .step-cards > article:nth-child(2) {
-    animation-range: entry 10% entry 50%;
-  }
-
-
-  .step-cards > article:nth-child(3) {
-    animation-range: entry 20% entry 60%;
-  }
-
-
-  @keyframes mobileStepCardReveal {
-
-    from {
-      opacity: 0;
-      transform: translateY(60px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-  }
-
+.hhgoa-swing {
+  transform-origin: top center;
+  animation: hhgoa-lanyard-swing 3.4s ease-in-out infinite;
+  will-change: transform;
 }
 
+/* ================= GOA STICKER BADGE ================= */
+/* Cream cut-out outline behind the pink Devanagari badge, so it reads
+   like a sticker slapped over the graffiti wordmark. */
+.hhgoa-goa-badge {
+  text-shadow:
+    -2px -2px 0 var(--color-cream),
+    2px -2px 0 var(--color-cream),
+    -2px 2px 0 var(--color-cream),
+    2px 2px 0 var(--color-cream),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+}
 
-/* =====================================================
-   REDUCED MOTION
-   ===================================================== */
+/* Gentle cloth-like ripple, as if the sticker is a small waving flag. */
+@keyframes hhgoa-flag-wave {
+  0%,
+  100% {
+    transform: rotate(-8deg) skewY(0deg) scaleY(1);
+  }
+  25% {
+    transform: rotate(-8deg) skewY(3deg) scaleY(0.98);
+  }
+  50% {
+    transform: rotate(-8deg) skewY(-2deg) scaleY(1.01);
+  }
+  75% {
+    transform: rotate(-8deg) skewY(2deg) scaleY(0.99);
+  }
+}
+
+.hhgoa-flag-wave {
+  display: inline-block;
+  transform-origin: 30% 50%;
+  animation: hhgoa-flag-wave 2.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ================= STRIPED RIBBON LANYARD ================= */
+/* Diagonal mustard/forest ribbon, matching the official builder page. */
+.hhgoa-ribbon {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-mustard) 0,
+    var(--color-mustard) 8px,
+    var(--color-forest-dark) 8px,
+    var(--color-forest-dark) 16px
+  );
+  background-color: var(--color-mustard);
+}
 
 @media (prefers-reduced-motion: reduce) {
-
-  .step-cards > article {
+  .typewriter-cursor {
     animation: none;
-    opacity: 1;
-    transform: none;
   }
 
+  .hhgoa-swing {
+    animation: none;
+  }
+
+  .hhgoa-flag-wave {
+    animation: none;
+  }
 }
+

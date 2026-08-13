@@ -1,5 +1,16 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import heroImage from "../assets/back.jpg";
+
+// Reusable "fade + rise into view" animation for scroll-triggered reveals.
+// once: false so it replays both scrolling down into view and scrolling
+// back up past it again.
+const revealOnScroll = {
+  initial: { opacity: 0, y: 32 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: false, amount: 0.25 },
+  transition: { duration: 0.6, ease: "easeOut" },
+};
 
 export default function Home() {
   return (
@@ -27,18 +38,33 @@ export default function Home() {
 
             </div>
 
-            <h1 className="relative font-display text-[clamp(4rem,10vw,9rem)] leading-[0.82] tracking-tight text-cream">
-  HACKER
-  <br />
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.82, y: 26 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 260,
+                damping: 15,
+                mass: 0.9,
+                delay: 0.1,
+              }}
+              className="relative text-[clamp(4rem,10vw,9rem)] leading-[0.82] tracking-tight"
+            >
+              <span className="font-graffiti text-shadow-graffiti block text-cream">
+                HACKER
+              </span>
 
-  <span className="text-mustard">
-    HOUSE
-  </span>
+              <span className="font-graffiti text-shadow-graffiti relative inline-block text-mustard">
+                HOUSE
+                <span
+                  className="hhgoa-flag-wave hhgoa-goa-badge absolute -top-[0.55em] -right-[0.15em] font-hindi-script text-[0.55em] text-flamingo"
+                  style={{ transform: "rotate(-8deg)" }}
+                >
+                  गोवा
+                </span>
+              </span>
+            </motion.h1>
 
-  <span className="goa-sticker">
-    GOA
-  </span>
-</h1>
             <p className="mt-10 max-w-xl font-body text-lg font-semibold leading-8 text-cream/90">
               Create your official Hacker House Goa 2026
               digital identity. Upload your photo, enter your
@@ -138,7 +164,7 @@ export default function Home() {
 
         <div className="mx-auto max-w-7xl">
 
-          <div className="mb-10">
+          <motion.div className="mb-10" {...revealOnScroll}>
 
             <p className="font-mono text-xs font-bold tracking-[0.3em] text-flamingo">
               THE BUREAU
@@ -148,28 +174,43 @@ export default function Home() {
               Get your card.
             </h2>
 
-          </div>
+          </motion.div>
 
 
-          <div className="step-cards grid gap-5 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
 
-            <Step
-              number="01"
-              title="Upload your photo"
-              text="Drop in a clear profile photo and crop it for your card."
-            />
+            <motion.div
+              {...revealOnScroll}
+              transition={{ ...revealOnScroll.transition, delay: 0.05 }}
+            >
+              <Step
+                number="01"
+                title="Upload your photo"
+                text="Drop in a clear profile photo and crop it for your card."
+              />
+            </motion.div>
 
-            <Step
-              number="02"
-              title="Enter your details"
-              text="Add your name, ID number, role and other information."
-            />
+            <motion.div
+              {...revealOnScroll}
+              transition={{ ...revealOnScroll.transition, delay: 0.15 }}
+            >
+              <Step
+                number="02"
+                title="Enter your details"
+                text="Add your name, ID number, role and other information."
+              />
+            </motion.div>
 
-            <Step
-              number="03"
-              title="Generate your card"
-              text="Preview your finished identity card and export it."
-            />
+            <motion.div
+              {...revealOnScroll}
+              transition={{ ...revealOnScroll.transition, delay: 0.25 }}
+            >
+              <Step
+                number="03"
+                title="Generate your card"
+                text="Preview your finished identity card and export it."
+              />
+            </motion.div>
 
           </div>
 
@@ -181,7 +222,10 @@ export default function Home() {
       {/* ================= CTA ================= */}
       <section className="bg-mustard px-6 py-20 lg:px-16">
 
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 md:flex-row md:items-center">
+        <motion.div
+          className="mx-auto flex max-w-7xl flex-col justify-between gap-8 md:flex-row md:items-center"
+          {...revealOnScroll}
+        >
 
           <div>
 
@@ -202,7 +246,7 @@ export default function Home() {
             BUILD MY ID →
           </Link>
 
-        </div>
+        </motion.div>
 
       </section>
 

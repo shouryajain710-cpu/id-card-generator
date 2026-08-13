@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  motion,
+  useMotionValue,
+  animate,
+  useReducedMotion,
+} from "framer-motion";
+import {
   User,
   Briefcase,
   Building2,
@@ -17,6 +23,7 @@ import {
   HH_GOA_WEBSITE_LABEL,
   HH_GOA_BLURB,
 } from "../utils/hhGoaConfig";
+import HangingLogoStrip from "./HangingLogoStrip";
 
 export default function IDCardPreview({
   data,
@@ -28,6 +35,40 @@ export default function IDCardPreview({
   const [animationKey, setAnimationKey] = useState(0);
   const frontRef = useRef(null);
   const backRef = useRef(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  /* ================================
+     DRAG-TO-SPIN
+     rotateY is a continuous (unwrapped) degree value so the card can
+     keep spinning the same direction across multiple flips/drags,
+     rather than snapping backwards. rotateX gives a light tilt while
+     dragging vertically, reset by the FLAT button.
+  ================================= */
+
+  const rotateY = useMotionValue(0);
+  const rotateX = useMotionValue(0);
+  const dragMeta = useRef({
+    dragging: false,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    startRotateY: 0,
+    startRotateX: 0,
+    lastX: 0,
+    lastT: 0,
+    velocity: 0,
+    moved: 0,
+  });
+
+  const springConfig = prefersReducedMotion
+    ? { duration: 0 }
+    : { type: "spring", stiffness: 140, damping: 18, mass: 0.9 };
+
+  const settleTo = (target, nextSide) => {
+    animate(rotateY, target, springConfig);
+    animate(rotateX, 0, springConfig);
+    if (nextSide) setSide(nextSide);
+  };
 
   // Replay the hanging-card animation when a new processed photo appears.
   // Typing into the form does not restart the animation.
@@ -55,9 +96,8 @@ export default function IDCardPreview({
   ================================= */
 
   const handleFlip = () => {
-    setSide((previous) =>
-      previous === "front" ? "back" : "front"
-    );
+    const nextSide = side === "front" ? "back" : "front";
+    settleTo(rotateY.get() + 180, nextSide);
   };
 
   const handleCardKeyDown = (event) => {
@@ -68,6 +108,87 @@ export default function IDCardPreview({
       event.preventDefault();
       handleFlip();
     }
+  };
+
+  // "BACK" toggles to the back face (labelled "FRONT" once you're
+  // already there). "FLAT" cancels any drag tilt/spin residue and
+  // settles the card flush on whichever face it currently shows.
+  const handleBackButton = () => {
+    handleFlip();
+  };
+
+  const handleFlatButton = () => {
+    const current = rotateY.get();
+    const nearestSameFace =
+      Math.round(current / 360) * 360;
+    settleTo(nearestSameFace, side);
+  };
+
+  /* ================================
+     DRAG TO SPIN
+  ================================= */
+
+  const handlePointerDown = (event) => {
+    const meta = dragMeta.current;
+    meta.dragging = true;
+    meta.pointerId = event.pointerId;
+    meta.startX = event.clientX;
+    meta.startY = event.clientY;
+    meta.startRotateY = rotateY.get();
+    meta.startRotateX = rotateX.get();
+    meta.lastX = event.clientX;
+    meta.lastT = performance.now();
+    meta.velocity = 0;
+    meta.moved = 0;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handlePointerMove = (event) => {
+    const meta = dragMeta.current;
+    if (!meta.dragging || event.pointerId !== meta.pointerId) return;
+
+    const deltaX = event.clientX - meta.startX;
+    const deltaY = event.clientY - meta.startY;
+    meta.moved = Math.max(meta.moved, Math.abs(deltaX), Math.abs(deltaY));
+
+    rotateY.set(meta.startRotateY + deltaX * 0.6);
+    rotateX.set(
+      Math.max(
+        -12,
+        Math.min(12, meta.startRotateX - deltaY * 0.12)
+      )
+    );
+
+    const now = performance.now();
+    const dt = now - meta.lastT;
+    if (dt > 0) {
+      meta.velocity = (event.clientX - meta.lastX) / dt;
+    }
+    meta.lastX = event.clientX;
+    meta.lastT = now;
+  };
+
+  const handlePointerUp = (event) => {
+    const meta = dragMeta.current;
+    if (!meta.dragging || event.pointerId !== meta.pointerId) return;
+    meta.dragging = false;
+    event.currentTarget.releasePointerCapture?.(meta.pointerId);
+
+    // A near-still pointer counts as a tap-to-flip.
+    if (meta.moved < 6) {
+      handleFlip();
+      return;
+    }
+
+    // Otherwise treat it like a flick: extend rotation by the release
+    // velocity, then snap to the nearest resting face (0/180/360...)
+    // so the card always lands readable, never at an odd angle.
+    const flicked = rotateY.get() + meta.velocity * 140;
+    const nearest = Math.round(flicked / 180) * 180;
+    const normalized = ((nearest % 360) + 360) % 360;
+    const nextSide = normalized === 180 ? "back" : "front";
+
+    settleTo(nearest, nextSide);
   };
 
   /* ================================
@@ -306,70 +427,83 @@ ctx.drawImage(
     <div className="flex w-full flex-col items-center">
 
       {/* =========================================
+          SPIN CONTROLS
+      ========================================== */}
+
+      <div className="mb-3 flex w-full max-w-xs items-center justify-between gap-2">
+
+        <span className="rounded-full border border-mustard/40 bg-forest-dark/80 px-3 py-1 font-mono text-[9px] tracking-widest text-cream/70">
+          DRAG ↔ TO SPIN
+        </span>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBackButton}
+            className="rounded-full border border-mustard/40 bg-forest-dark/80 px-3 py-1 font-mono text-[9px] font-bold tracking-widest text-cream/80 transition-colors hover:text-mustard"
+          >
+            {side === "back" ? "FRONT" : "BACK"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleFlatButton}
+            className="rounded-full border border-mustard/40 bg-forest-dark/80 px-3 py-1 font-mono text-[9px] font-bold tracking-widest text-cream/80 transition-colors hover:text-mustard"
+          >
+            FLAT
+          </button>
+        </div>
+
+      </div>
+
+      {/* =========================================
           CARD
       ========================================== */}
 
       <div
         key={animationKey}
-        className="id-card-hanging-rig relative w-full max-w-xs pt-[clamp(7rem,18vh,13rem)]"
+        className="id-card-hanging-rig relative flex w-full max-w-xs flex-col items-center"
       >
         {/* PREVIEW-ONLY LANYARD
-            This sits outside frontRef/backRef, so it is never exported. */}
-        <div
-          aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            left-1/2
-            top:clamp(-17rem,-24vh,-9rem)
-            z-0
-            h-[calc(clamp(7rem,18vh,13rem) + clamp(9rem,24vh,17rem))]
-            w-5
-            -translate-x-1/2
-            rounded-b-md
-            border-x-2
-            border-ink/20
-            bg-gradient-to-r
-            from-forest-light
-            via-forest
-            to-forest-light
-            shadow-sm
-          "
+            This sits outside frontRef/backRef, so it is never exported.
+            Swings together with the card via the rig's own animation. */}
+        <HangingLogoStrip
+          className="-mb-1"
+          strapHeight="clamp(6rem,16vh,11rem)"
         />
 
-        {/* EXISTING ID CARD / FLIP AREA */}
+        {/* EXISTING ID CARD / DRAG-TO-SPIN AREA */}
         <div
           role="button"
           tabIndex={0}
-          aria-label="Flip ID card"
-          onClick={handleFlip}
+          aria-label="Drag to spin, or press Enter to flip, the ID card"
           onKeyDown={handleCardKeyDown}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           className="
             relative
             aspect-[5/8]
             w-full
-            cursor-pointer
+            cursor-grab
+            touch-none
+            select-none
             [perspective:1200px]
             focus-visible:outline-none
             focus-visible:ring-2
             focus-visible:ring-mustard
             focus-visible:ring-offset-4
+            active:cursor-grabbing
           "
         >
-        <div
-          className={`
-            relative
-            h-full
-            w-full
-            transition-transform
-            duration-700
-            [transform-style:preserve-3d]
-            ${
-              side === "back"
-                ? "[transform:rotateY(180deg)]"
-                : ""
-            }
-          `}
+        <motion.div
+          style={{
+            rotateY,
+            rotateX,
+            transformStyle: "preserve-3d",
+          }}
+          className="relative h-full w-full"
         >
 
           {/* =====================================
@@ -431,7 +565,7 @@ ctx.drawImage(
             />
           </div>
 
-        </div>
+        </motion.div>
         </div>
       </div>
 
@@ -439,7 +573,9 @@ ctx.drawImage(
       <style>{`
         .id-card-hanging-rig {
           transform-origin: top center;
-          animation: hhgoa-card-fall 900ms cubic-bezier(0.22, 0.8, 0.25, 1) both;
+          animation:
+            hhgoa-card-fall 900ms cubic-bezier(0.22, 0.8, 0.25, 1) both,
+            hhgoa-lanyard-swing 3.4s ease-in-out 900ms infinite;
           will-change: transform, opacity;
         }
 
@@ -493,7 +629,7 @@ ctx.drawImage(
       {/* Flip hint */}
 
       <p className="mt-3 font-mono text-[10px] tracking-widest text-ink/40">
-        CLICK CARD TO FLIP
+        DRAG TO SPIN · TAP TO FLIP
       </p>
 
       {/* =========================================

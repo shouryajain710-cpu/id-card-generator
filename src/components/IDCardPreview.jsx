@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 import { QRCodeSVG } from "qrcode.react";
-import { toPng } from "html-to-image";
+import html2canvas from "html2canvas";
 
 import { formatName } from "../utils/formatName";
 
@@ -34,6 +34,7 @@ import {
 } from "../utils/hhGoaConfig";
 
 import HangingLogoStrip from "./HangingLogoStrip";
+import ShareToXButton from "./ShareToXButton";
 
 import { getRoleTitle } from "../utils/roleTitles";
 

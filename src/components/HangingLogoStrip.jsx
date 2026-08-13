@@ -200,20 +200,19 @@ export default function HangingLogoStrip({
           ================================================== */}
 
           <motion.path
-            d="
-              M 11 0
-              C 10 38, 14 70, 11 105
-              C 8 140, 15 172, 12 205
-              C 10 228, 13 245, 12 260
-
-              L 28 260
-
-              C 29 245, 27 228, 29 205
-              C 32 172, 25 140, 29 105
-              C 32 70, 26 38, 29 0
-
-              Z
-            "
+            initial={{
+              d: `
+                M 11 0
+                C 10 38, 14 70, 11 105
+                C 8 140, 15 172, 12 205
+                C 10 228, 13 245, 12 260
+                L 28 260
+                C 29 245, 27 228, 29 205
+                C 32 172, 25 140, 29 105
+                C 32 70, 26 38, 29 0
+                Z
+              `,
+            }}
             fill="url(#hhgoaRibbonPattern)"
             stroke="#041610"
             strokeWidth="2"
@@ -295,7 +294,9 @@ export default function HangingLogoStrip({
             stroke="#c8f526"
             strokeWidth="1"
             strokeLinecap="round"
-            opacity="0.4"
+            initial={{
+              opacity: 0.4,
+            }}
             animate={
               prefersReducedMotion
                 ? {

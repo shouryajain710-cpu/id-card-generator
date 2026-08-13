@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 import { QRCodeSVG } from "qrcode.react";
-import { toPng } from "html-to-image";
+import html2canvas from "html2canvas";
 
 import { formatName } from "../utils/formatName";
 
@@ -595,77 +595,48 @@ export default function IDCardPreview({
       const clone =
         element.cloneNode(true);
 
-      clone.style.transform =
-        "none";
+      prepareCloneForExport(
+        clone,
+        element
+      );
 
-      clone.style.position =
-        "relative";
-
-      clone.style.inset =
-        "auto";
-
-      clone.style.width =
-        `${element.offsetWidth}px`;
-
-      clone.style.height =
-        `${element.offsetHeight}px`;
-
-      clone.style.backfaceVisibility =
-        "visible";
-
-      clone.style.webkitBackfaceVisibility =
-        "visible";
-
-      const container =
-        document.createElement(
-          "div"
+      const iframe =
+        mountCloneInExportIframe(
+          clone,
+          element.offsetWidth,
+          element.offsetHeight
         );
-
-      container.style.position =
-        "fixed";
-
-      container.style.left =
-        "-100000px";
-
-      container.style.top =
-        "0";
-
-      container.style.width =
-        `${element.offsetWidth}px`;
-
-      container.style.height =
-        `${element.offsetHeight}px`;
-
-      container.style.overflow =
-        "hidden";
-
-      container.style.pointerEvents =
-        "none";
-
-      container.style.zIndex =
-        "-1";
-
-      container.appendChild(
-        clone
-      );
-
-      document.body.appendChild(
-        container
-      );
 
       try {
         await waitForImages(
           clone
         );
 
-        const dataUrl =
-          await toPng(
+        await inlineSvgsInClone(
+          clone
+        );
+
+        if (
+          iframe.contentDocument
+            ?.fonts?.ready
+        ) {
+          await iframe.contentDocument.fonts.ready;
+        }
+
+        const canvas =
+          await html2canvas(
             clone,
             {
-              pixelRatio: 3,
-              cacheBust: true,
+              window:
+                iframe.contentWindow,
+              scale: 3,
               backgroundColor:
                 "#041610",
+              allowTaint: true,
+              useCORS: true,
+              logging: false,
+              foreignObjectRendering:
+                false,
               width:
                 element.offsetWidth,
               height:
@@ -673,11 +644,36 @@ export default function IDCardPreview({
             }
           );
 
-        return dataUrl;
-      } finally {
-        document.body.removeChild(
-          container
+        return canvas.toDataURL(
+          "image/png"
         );
+      } catch (error) {
+        console.error(
+          "Export error:",
+          error
+        );
+
+        let errorMsg =
+          "Failed to export ID card.";
+
+        if (
+          error instanceof Error
+        ) {
+          errorMsg +=
+            ` ${error.message}`;
+        }
+
+        throw new Error(errorMsg);
+      } finally {
+        if (
+          document.body.contains(
+            iframe
+          )
+        ) {
+          document.body.removeChild(
+            iframe
+          );
+        }
       }
     };
 
@@ -703,7 +699,9 @@ export default function IDCardPreview({
         ) {
           const dataUrl =
             await exportCard(
-              frontRef.current
+              getExportElement(
+                frontRef
+              )
             );
 
           downloadDataUrl(
@@ -720,7 +718,12 @@ export default function IDCardPreview({
         ) {
           const dataUrl =
             await exportCard(
-              backRef.current
+              getExportElement(
+                backRef,
+                {
+                  skip3dWrapper: true,
+                }
+              )
             );
 
           downloadDataUrl(
@@ -737,12 +740,19 @@ export default function IDCardPreview({
         ) {
           const frontDataUrl =
             await exportCard(
-              frontRef.current
+              getExportElement(
+                frontRef
+              )
             );
 
           const backDataUrl =
             await exportCard(
-              backRef.current
+              getExportElement(
+                backRef,
+                {
+                  skip3dWrapper: true,
+                }
+              )
             );
 
           const frontImage =
@@ -791,7 +801,7 @@ export default function IDCardPreview({
           }
 
           ctx.fillStyle =
-            "#FBF3DD";
+            "#041610";
 
           ctx.fillRect(
             0,
@@ -830,9 +840,18 @@ export default function IDCardPreview({
           );
         }
       } catch (error) {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : String(error);
+
         console.error(
           "Failed to download ID card:",
-          error
+          errorMsg
+        );
+
+        alert(
+          `Download failed: ${errorMsg}. Please try again.`
         );
       } finally {
         setIsDownloading(false);
@@ -1354,11 +1373,26 @@ function CardBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
       {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b] via-[#051c14] to-[#08291d]" />
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "linear-gradient(to bottom, #03110b, #051c14, #08291d)"
+        }}
+      />
       
       {/* Sunset Horizon Glow */}
-      <div className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full bg-gradient-to-tr from-[#ff9100] to-[#ffd000] opacity-40 blur-xl" />
-      <div className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full bg-[#ffd000] opacity-30 blur-lg" />
+      <div 
+        className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full opacity-40 blur-xl"
+        style={{
+          backgroundImage: "linear-gradient(135deg, #ff9100, #ffd000)"
+        }}
+      />
+      <div 
+        className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full opacity-30 blur-lg"
+        style={{
+          backgroundColor: "#ffd000"
+        }}
+      />
       
       {/* Palm Trees & Beach Silhouette SVG */}
       <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 320 512" preserveAspectRatio="xMidYMid slice" fill="none">
@@ -1376,10 +1410,21 @@ function CardBackground() {
       </svg>
       
       {/* Cyber Grid Dots Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(#c8f526_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
+      <div 
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: "radial-gradient(#c8f526 1px, transparent 1px)",
+          backgroundSize: "16px 16px"
+        }}
+      />
       
       {/* Dark vignette */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b]/80 via-transparent to-[#03110b]/90" />
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: "linear-gradient(to bottom, rgba(3, 17, 11, 0.8), transparent, rgba(3, 17, 11, 0.9))"
+        }}
+      />
     </div>
   );
 }
@@ -1403,7 +1448,10 @@ function FrontFace({
   const titleObj = roleTitle || getRoleTitle(designation) || { title: "THE CODE NOMAD" };
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden p-4 sm:p-5 text-white crisp-card select-none">
+    <div
+      data-export-root
+      className="relative flex h-full w-full flex-col justify-between overflow-hidden p-4 sm:p-5 text-white crisp-card select-none"
+    >
       <CardBackground />
 
       {/* TOP CONTENT LAYER */}
@@ -1577,7 +1625,10 @@ function BackFace({ idNumber }) {
   const displayId = idNumber && idNumber.trim() ? idNumber : "26-0427";
 
   return (
-    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden p-4 sm:p-5 text-white crisp-card select-none">
+    <div
+      data-export-root
+      className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[26px] border-2 border-[#c8f526] bg-[#041610] p-4 text-white shadow-[0_0_30px_rgba(200,245,38,0.25)] crisp-card select-none sm:p-5"
+    >
       <CardBackground />
 
       {/* TOP CONTENT LAYER */}
@@ -1674,6 +1725,451 @@ function BackFace({ idNumber }) {
 /* =====================================================
    IMAGE LOADING
 ===================================================== */
+
+const UNSUPPORTED_COLOR_PATTERN =
+  /(oklab|oklch|lab\(|lch\(|hwb\(|color\()/i;
+
+const EXPORT_FONT_HREF =
+  "https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Bungee&family=Baloo+2:wght@600;700;800&family=Yatra+One&family=Rajdhani:wght@600;700&family=Syne:wght@700;800&family=Caveat:wght@600;700&display=swap";
+
+const EXPORT_COLOR_PROPS = [
+  "color",
+  "backgroundColor",
+  "borderColor",
+  "borderTopColor",
+  "borderRightColor",
+  "borderBottomColor",
+  "borderLeftColor",
+  "outlineColor",
+  "fill",
+  "stroke",
+  "boxShadow",
+  "textShadow",
+];
+
+function getExportElement(
+  ref,
+  { skip3dWrapper = false } = {}
+) {
+  const element = ref?.current;
+
+  if (!element) {
+    return null;
+  }
+
+  if (skip3dWrapper) {
+    return (
+      element.querySelector(
+        "[data-export-root]"
+      ) ?? element
+    );
+  }
+
+  return element;
+}
+
+function sanitizeStylesheetText(css) {
+  if (!css) {
+    return css;
+  }
+
+  let sanitized = css.replace(
+    /oklab\((?:[^()]|\([^()]*\))*\)/gi,
+    (match) => toSafeCanvasColor(match)
+  );
+
+  sanitized = sanitized.replace(
+    /oklch\((?:[^()]|\([^()]*\))*\)/gi,
+    "rgb(200, 245, 38)"
+  );
+
+  sanitized = sanitized.replace(
+    /(?:lab|lch|hwb)\((?:[^()]|\([^()]*\))*\)/gi,
+    "rgb(255, 255, 255)"
+  );
+
+  return sanitized;
+}
+
+function injectExportStyles(doc) {
+  const fontLink =
+    doc.createElement("link");
+
+  fontLink.rel = "stylesheet";
+  fontLink.href = EXPORT_FONT_HREF;
+  doc.head.appendChild(fontLink);
+
+  document
+    .querySelectorAll("style")
+    .forEach((styleEl) => {
+      if (!styleEl.textContent) {
+        return;
+      }
+
+      const exportStyle =
+        doc.createElement("style");
+
+      exportStyle.textContent =
+        sanitizeStylesheetText(
+          styleEl.textContent
+        );
+
+      doc.head.appendChild(
+        exportStyle
+      );
+    });
+}
+
+function toSafeCanvasColor(value) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const convertOklabToRgb = (oklabString) => {
+    const match = oklabString.match(
+      /oklab\(([-0-9.]+)\s+([-0-9.]+)\s+([-0-9.]+)(?:\s*\/\s*([-0-9.]+))?\)/i
+    );
+
+    if (!match) {
+      return oklabString;
+    }
+
+    const [, l, a, b, alpha = "1"] = match;
+    const L = Number(l);
+    const A = Number(a);
+    const B = Number(b);
+    const alphaValue = Number(alpha);
+
+    const l_ = L + 0.3963377774 * A + 0.2158037573 * B;
+    const m_ = L - 0.1055613458 * A - 0.0638541728 * B;
+    const s_ = L - 0.0894841775 * A - 1.291485548 * B;
+
+    const lCubed = l_ ** 3;
+    const mCubed = m_ ** 3;
+    const sCubed = s_ ** 3;
+
+    let r =
+      4.0767416621 * lCubed -
+      3.3077115913 * mCubed +
+      0.2309699292 * sCubed;
+    let g =
+      -1.2684380046 * lCubed +
+      2.6097574011 * mCubed -
+      0.3413193965 * sCubed;
+    let bChannel =
+      -0.0041960863 * lCubed -
+      0.7034186147 * mCubed +
+      1.707614701 * sCubed;
+
+    r = Math.max(0, Math.min(1, r));
+    g = Math.max(0, Math.min(1, g));
+    bChannel = Math.max(0, Math.min(1, bChannel));
+
+    const red = Math.round(r * 255);
+    const green = Math.round(g * 255);
+    const blue = Math.round(bChannel * 255);
+
+    return `rgba(${red}, ${green}, ${blue}, ${Math.min(1, Math.max(0, alphaValue))})`;
+  };
+
+  if (UNSUPPORTED_COLOR_PATTERN.test(value)) {
+    if (value.includes("oklab")) {
+      return convertOklabToRgb(value);
+    }
+    return "rgb(255, 255, 255)";
+  }
+
+  return value;
+}
+
+function sanitizeCSSValue(value) {
+  if (typeof value !== "string" || !value) {
+    return value;
+  }
+
+  if (!UNSUPPORTED_COLOR_PATTERN.test(value)) {
+    return value;
+  }
+
+  let sanitized = value.replace(
+    /oklab\((?:[^()]|\([^()]*\))*\)/gi,
+    (match) => toSafeCanvasColor(match)
+  );
+
+  sanitized = sanitized.replace(
+    /oklch\((?:[^()]|\([^()]*\))*\)/gi,
+    "rgb(200, 245, 38)"
+  );
+
+  sanitized = sanitized.replace(
+    /(?:lab|lch|hwb)\((?:[^()]|\([^()]*\))*\)/gi,
+    "rgb(255, 255, 255)"
+  );
+
+  sanitized = sanitized.replace(
+    /color\((?:[^()]|\([^()]*\))*\)/gi,
+    (match) => {
+      if (match.includes("srgb")) {
+        return match;
+      }
+      return "rgb(255, 255, 255)";
+    }
+  );
+
+  if (UNSUPPORTED_COLOR_PATTERN.test(sanitized)) {
+    return null;
+  }
+
+  return sanitized;
+}
+
+function walkElementsInParallel(
+  sourceRoot,
+  cloneRoot,
+  callback
+) {
+  callback(sourceRoot, cloneRoot);
+
+  const sourceWalker =
+    document.createTreeWalker(
+      sourceRoot,
+      NodeFilter.SHOW_ELEMENT
+    );
+  const cloneWalker =
+    document.createTreeWalker(
+      cloneRoot,
+      NodeFilter.SHOW_ELEMENT
+    );
+
+  while (
+    sourceWalker.nextNode() &&
+    cloneWalker.nextNode()
+  ) {
+    callback(
+      sourceWalker.currentNode,
+      cloneWalker.currentNode
+    );
+  }
+}
+
+function inlineComputedStylesForExport(
+  cloneEl,
+  sourceEl
+) {
+  const computed =
+    window.getComputedStyle(sourceEl);
+
+  cloneEl.style.setProperty(
+    "animation",
+    "none",
+    "important"
+  );
+  cloneEl.style.setProperty(
+    "transition",
+    "none",
+    "important"
+  );
+  cloneEl.style.clipPath = "none";
+  cloneEl.style.webkitClipPath = "none";
+  cloneEl.style.transform = "none";
+  cloneEl.style.transformOrigin =
+    "center center";
+  cloneEl.style.backfaceVisibility =
+    "visible";
+  cloneEl.style.webkitBackfaceVisibility =
+    "visible";
+  cloneEl.style.transformStyle = "flat";
+  cloneEl.style.backdropFilter = "none";
+  cloneEl.style.perspective = "none";
+
+  EXPORT_COLOR_PROPS.forEach(
+    (prop) => {
+      const value = computed[prop];
+
+      if (
+        !value ||
+        value === "none" ||
+        value === "transparent"
+      ) {
+        return;
+      }
+
+      const sanitized =
+        sanitizeCSSValue(value);
+
+      if (
+        sanitized === null ||
+        sanitized === undefined
+      ) {
+        return;
+      }
+
+      cloneEl.style[prop] = sanitized;
+    }
+  );
+
+  const backgroundImage =
+    computed.backgroundImage;
+
+  if (
+    backgroundImage &&
+    backgroundImage !== "none"
+  ) {
+    const safeBackground =
+      sanitizeCSSValue(backgroundImage);
+
+    if (safeBackground) {
+      cloneEl.style.backgroundImage =
+        safeBackground;
+    } else {
+      cloneEl.style.backgroundImage =
+        "none";
+    }
+  }
+}
+
+function mountCloneInExportIframe(
+  clone,
+  width,
+  height
+) {
+  const iframe =
+    document.createElement("iframe");
+
+  iframe.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+  iframe.style.position = "fixed";
+  iframe.style.left = "-200vw";
+  iframe.style.top = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  iframe.style.visibility = "hidden";
+
+  document.body.appendChild(iframe);
+
+  const doc =
+    iframe.contentDocument;
+
+  if (!doc) {
+    throw new Error(
+      "Could not create export frame."
+    );
+  }
+
+  doc.open();
+  doc.write(
+    "<!DOCTYPE html><html><head></head><body></body></html>"
+  );
+  doc.close();
+
+  injectExportStyles(doc);
+
+  doc.body.style.margin = "0";
+  doc.body.style.padding = "0";
+  doc.body.style.width = `${width}px`;
+  doc.body.style.height = `${height}px`;
+  doc.body.style.backgroundColor =
+    "#041610";
+  doc.body.style.overflow = "hidden";
+
+  doc.body.appendChild(clone);
+
+  return iframe;
+}
+
+function prepareCloneForExport(clone, sourceElement) {
+  clone.style.transform = "none";
+  clone.style.perspective = "none";
+  clone.style.position = "relative";
+  clone.style.inset = "auto";
+  clone.style.width = `${sourceElement.offsetWidth}px`;
+  clone.style.height = `${sourceElement.offsetHeight}px`;
+  clone.style.backfaceVisibility = "visible";
+  clone.style.webkitBackfaceVisibility = "visible";
+  clone.style.transformStyle = "flat";
+  clone.style.overflow = "hidden";
+
+  walkElementsInParallel(
+    sourceElement,
+    clone,
+    (sourceEl, cloneEl) => {
+      inlineComputedStylesForExport(
+        cloneEl,
+        sourceEl
+      );
+    }
+  );
+
+  clone
+    .querySelectorAll(".id-card-scanline")
+    .forEach((node) => {
+      node.style.display = "none";
+    });
+
+  clone
+    .querySelectorAll(".id-card-content-reveal")
+    .forEach((node) => {
+      node.style.clipPath = "none";
+      node.style.webkitClipPath = "none";
+      node.style.opacity = "1";
+      node.style.transform = "none";
+      node.style.setProperty(
+        "animation",
+        "none",
+        "important"
+      );
+    });
+}
+
+async function inlineSvgsInClone(root) {
+  const svgs = [
+    ...root.querySelectorAll("svg"),
+  ];
+
+  await Promise.all(
+    svgs.map(async (svg) => {
+      const rect =
+        svg.getBoundingClientRect();
+      const width =
+        rect.width ||
+        Number(svg.getAttribute("width")) ||
+        110;
+      const height =
+        rect.height ||
+        Number(svg.getAttribute("height")) ||
+        110;
+      const svgString =
+        new XMLSerializer().serializeToString(
+          svg
+        );
+      const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+      const img =
+        document.createElement("img");
+
+      img.width = width;
+      img.height = height;
+      img.style.width = `${width}px`;
+      img.style.height = `${height}px`;
+      img.style.display = "block";
+
+      await new Promise((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () =>
+          reject(
+            new Error(
+              "Failed to inline SVG for export."
+            )
+          );
+        img.src = url;
+      });
+
+      svg.replaceWith(img);
+    })
+  );
+}
 
 function loadImage(src) {
   return new Promise(

@@ -24,9 +24,7 @@ function formatFileSize(bytes) {
  * PhotoUploader
  * Selects and validates a photo, then hands the raw File to the parent via
  * `onImageSelect` — the parent is responsible for opening PhotoEditor and
- * producing a processed image. This component no longer owns any preview
- * object URL itself: what it displays is entirely controlled by the
- * `previewUrl` prop, so it never has cropping/processing logic of its own.
+ * producing a processed image.
  */
 export default function PhotoUploader({
   onImageSelect,
@@ -47,18 +45,18 @@ export default function PhotoUploader({
   const infoId = useId();
 
   const validateFile = (candidate) => {
-    const fileName = candidate.name?.toLowerCase() || "";
+    const candidateName = candidate.name?.toLowerCase() || "";
     const fileType = candidate.type?.toLowerCase() || "";
 
     const isAcceptedType = ACCEPTED_TYPES.includes(fileType);
 
     const isAcceptedExtension =
-      fileName.endsWith(".jpg") ||
-      fileName.endsWith(".jpeg") ||
-      fileName.endsWith(".png") ||
-      fileName.endsWith(".webp") ||
-      fileName.endsWith(".heic") ||
-      fileName.endsWith(".heif");
+      candidateName.endsWith(".jpg") ||
+      candidateName.endsWith(".jpeg") ||
+      candidateName.endsWith(".png") ||
+      candidateName.endsWith(".webp") ||
+      candidateName.endsWith(".heic") ||
+      candidateName.endsWith(".heif");
 
     if (!isAcceptedType && !isAcceptedExtension) {
       return "Please upload a JPG, PNG, WEBP, or HEIC image.";
@@ -86,8 +84,7 @@ export default function PhotoUploader({
   const handleInputChange = (e) => {
     const selected = e.target.files?.[0];
 
-    // Reset immediately so re-selecting the exact same file (e.g. after
-    // Cancel in the editor) still fires a change event next time.
+    // Reset immediately so re-selecting the exact same file still fires change.
     e.target.value = "";
 
     if (selected) acceptFile(selected);

@@ -20,16 +20,15 @@ export default function IDCardForm({
   const [rawFile, setRawFile] = useState(null);
   const [processedPhoto, setProcessedPhoto] = useState(null);
 
+  // Only clean up the object URL.
+  // Do not update the parent from this effect.
   useEffect(() => {
-    onImageSelect?.(processedPhoto?.file ?? null);
-    onPreviewChange?.(processedPhoto?.url ?? null);
-
     return () => {
       if (processedPhoto?.url) {
         URL.revokeObjectURL(processedPhoto.url);
       }
     };
-  }, [processedPhoto]);
+  }, [processedPhoto?.url]);
 
   const handleRawSelect = (file) => {
     setRawFile(file);
@@ -51,6 +50,10 @@ export default function IDCardForm({
       url,
     });
 
+    // Update parent directly when the processed photo is ready.
+    onImageSelect?.(file);
+    onPreviewChange?.(url);
+
     setRawFile(null);
   };
 
@@ -60,6 +63,10 @@ export default function IDCardForm({
 
   const handleRemovePhoto = () => {
     setProcessedPhoto(null);
+
+    // Update parent directly when photo is removed.
+    onImageSelect?.(null);
+    onPreviewChange?.(null);
   };
 
   const handlePresetSelect = (value) => {

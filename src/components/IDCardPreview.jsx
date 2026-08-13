@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
-
+import ShareToXButton from "./ShareToXButton.jsx";
 import { formatName } from "../utils/formatName";
 import {
   HH_GOA_WEBSITE_URL,
@@ -860,7 +860,7 @@ export default function IDCardPreview({
               ? "FRONT"
               : "BACK"}
           </button>
-
+          
           <button
             type="button"
             onClick={
@@ -1349,7 +1349,7 @@ export default function IDCardPreview({
               }`}
 
         </button>
-
+        <ShareToXButton />
       </div>
 
     </div>

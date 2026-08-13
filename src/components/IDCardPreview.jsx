@@ -13,6 +13,13 @@ import {
   QrCode,
   Download,
   CreditCard,
+  Code2,
+  Crown,
+  Sprout,
+  Triangle,
+  Rocket,
+  MapPin,
+  Globe,
 } from "lucide-react";
 
 import { QRCodeSVG } from "qrcode.react";
@@ -658,7 +665,7 @@ export default function IDCardPreview({
               pixelRatio: 3,
               cacheBust: true,
               backgroundColor:
-                "#1B4332",
+                "#041610",
               width:
                 element.offsetWidth,
               height:
@@ -988,13 +995,13 @@ export default function IDCardPreview({
                 h-full
                 w-full
                 overflow-hidden
-                rounded-3xl
-                border-3
-                border-mustard
-                bg-forest
-                text-cream
-                shadow-[0_22px_45px_rgba(0,0,0,0.30)]
-                [backface-visibility:hidden]
+                rounded-[26px]
+                border-2
+                border-[#c8f526]
+                bg-[#041610]
+                text-white
+                shadow-[0_0_30px_rgba(200,245,38,0.25)]
+                crisp-card
               "
             >
 
@@ -1035,13 +1042,13 @@ export default function IDCardPreview({
                 h-full
                 w-full
                 overflow-hidden
-                rounded-3xl
-                border-3
-                border-mustard
-                bg-forest
-                text-cream
-                shadow-[0_22px_45px_rgba(0,0,0,0.30)]
-                [backface-visibility:hidden]
+                rounded-[26px]
+                border-2
+                border-[#c8f526]
+                bg-[#041610]
+                text-white
+                shadow-[0_0_30px_rgba(200,245,38,0.25)]
+                crisp-card
                 [transform:rotateY(180deg)]
               "
             >
@@ -1340,6 +1347,44 @@ export default function IDCardPreview({
 }
 
 /* =====================================================
+   CARD BACKGROUND SVG (Crisp Cyber Tropical Sunset)
+===================================================== */
+
+function CardBackground() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
+      {/* Base gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b] via-[#051c14] to-[#08291d]" />
+      
+      {/* Sunset Horizon Glow */}
+      <div className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full bg-gradient-to-tr from-[#ff9100] to-[#ffd000] opacity-40 blur-xl" />
+      <div className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full bg-[#ffd000] opacity-30 blur-lg" />
+      
+      {/* Palm Trees & Beach Silhouette SVG */}
+      <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 320 512" preserveAspectRatio="xMidYMid slice" fill="none">
+        {/* Palm tree left */}
+        <path d="M-10 240 Q40 190 60 110 Q50 90 20 80 Q60 70 80 100 Q90 60 50 40 Q100 40 100 80 Q120 50 140 70 Q110 90 80 110 Q120 180 80 260 Z" fill="#010a06" />
+        <path d="M-20 340 Q30 290 50 200 Q80 280 -10 360 Z" fill="#010a06" />
+        
+        {/* Palm tree right */}
+        <path d="M330 200 Q270 160 250 80 Q270 60 300 60 Q260 40 240 70 Q230 30 260 20 Q210 20 220 60 Q190 30 180 60 Q210 80 230 100 Q200 170 250 240 Z" fill="#010a06" />
+        <path d="M340 320 Q280 270 260 180 Q230 260 330 340 Z" fill="#010a06" />
+
+        {/* Shore & Waters */}
+        <path d="M0 380 Q100 370 200 400 T320 390 L320 512 L0 512 Z" fill="#020e08" />
+        <path d="M0 430 Q120 420 240 450 T320 440 L320 512 L0 512 Z" fill="#010805" />
+      </svg>
+      
+      {/* Cyber Grid Dots Overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(#c8f526_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
+      
+      {/* Dark vignette */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b]/80 via-transparent to-[#03110b]/90" />
+    </div>
+  );
+}
+
+/* =====================================================
    FRONT FACE
 ===================================================== */
 
@@ -1351,233 +1396,175 @@ function FrontFace({
   photoPreviewUrl,
   roleTitle,
 }) {
+  const displayId = idNumber && idNumber.trim() ? idNumber : "26-0427";
+  const displayName = fullName && fullName.trim() && fullName !== "Your Name" ? formatName(fullName) : "YOUR NAME";
+  const displayStack = designation && designation.trim() ? designation : "YOUR STACK";
+  const displayDept = department && department.trim() ? department : "e.g. Full Stack / AI / Designer";
+  const titleObj = roleTitle || getRoleTitle(designation) || { title: "THE CODE NOMAD" };
+
   return (
-    <div className="relative h-full w-full">
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden p-4 sm:p-5 text-white crisp-card select-none">
+      <CardBackground />
 
-      {/* HEADER */}
-
-      <div
-        className="
-          flex
-          items-center
-          justify-between
-          border-b-2
-          border-dashed
-          border-mustard/40
-          px-5
-          pb-4
-          pt-5
-        "
-      >
-
-        <div>
-
-          <p
-            className="
-              font-display
-              text-base
-              leading-none
-              text-mustard
-            "
-          >
-            HACKER HOUSE
-          </p>
-
-          <p
-            className="
-              font-mono
-              text-[10px]
-              tracking-[0.2em]
-              text-cream/50
-            "
-          >
-            GOA · 2026
-          </p>
-
-        </div>
-
-        <CreditCard
-          className="h-5 w-5 text-cream/40"
-          aria-hidden="true"
-        />
-
-      </div>
-
-      {/* PHOTO */}
-
-      <div
-        className="
-          flex
-          flex-col
-          items-center
-          px-5
-          pt-6
-        "
-      >
-
-        <div
-          className="
-            flex
-            h-24
-            w-24
-            items-center
-            justify-center
-            overflow-hidden
-            rounded-full
-            border-3
-            border-mustard
-            bg-forest-dark
-          "
-        >
-
-          {photoPreviewUrl ? (
-            <img
-              src={
-                photoPreviewUrl
-              }
-              alt={
-                fullName !==
-                "Your Name"
-                  ? `Photo of ${fullName}`
-                  : "Uploaded profile photo"
-              }
-              className="
-                h-full
-                w-full
-                object-cover
-              "
-            />
-          ) : (
-            <User
-              className="
-                h-10
-                w-10
-                text-cream/30
-              "
-              aria-hidden="true"
-            />
-          )}
-
-        </div>
-
-        {/* NAME */}
-
-        <h3
-          className="
-            mt-4
-            text-center
-            font-display
-            text-2xl
-            leading-tight
-            text-cream
-          "
-        >
-          {fullName}
-        </h3>
-
-        {/* DESIGNATION */}
-
-        <span
-          className="
-            mt-2
-            inline-flex
-            max-w-full
-            items-center
-            gap-1.5
-            rounded-full
-            bg-mustard/15
-            px-3
-            py-1
-            font-mono
-            text-xs
-            font-bold
-            text-mustard
-          "
-        >
-
-          <Briefcase
-            className="h-3 w-3 shrink-0"
-            aria-hidden="true"
-          />
-
-          <span className="truncate">
-            {designation}
-          </span>
-
-        </span>
-
-        {/* UNIQUE HH GOA TITLE */}
-
-        {roleTitle && (
-          <div
-            className="
-              mt-3
-              w-full
-              text-center
-            "
-          >
-
-            <p
-              className="
-                font-mono
-                text-[7px]
-                font-bold
-                tracking-[0.22em]
-                text-flamingo
-              "
-            >
-              HH GOA TITLE
-            </p>
-
-            <p
-              className="
-                mt-1
-                font-graffiti
-                text-[11px]
-                leading-tight
-                text-mustard
-              "
-            >
-              {roleTitle.title}
-            </p>
-
+      {/* TOP CONTENT LAYER */}
+      <div className="relative z-10 space-y-3">
+        {/* HEADER */}
+        <div className="flex items-center justify-between border-b border-[#c8f526]/25 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-[#c8f526] bg-[#041610] font-mono text-xs font-black text-[#c8f526] shadow-[0_0_8px_rgba(200,245,38,0.4)]">
+              HH
+            </div>
+            <div>
+              <p className="font-tech text-xs font-bold leading-none tracking-wider text-white">
+                HACKER HOUSE
+              </p>
+              <p className="font-mono text-[9px] font-bold tracking-[0.18em] text-[#c8f526]">
+                GOA · 2026
+              </p>
+            </div>
           </div>
-        )}
 
+          <div className="text-right">
+            <span className="block font-mono text-[7px] font-bold tracking-widest text-[#c8f526]/70 uppercase">
+              BUILDER ID
+            </span>
+            <span className="inline-block rounded border border-[#c8f526]/40 bg-[#041610]/80 px-2 py-0.5 font-mono text-[10px] font-bold text-[#c8f526]">
+              {displayId}
+            </span>
+          </div>
+        </div>
+
+        {/* PHOTO AREA */}
+        <div className="relative my-2 flex flex-col items-center justify-center">
+          <div className="relative">
+            {/* Corner reticle brackets */}
+            <span className="absolute -left-2.5 -top-2.5 font-mono text-xs font-bold text-[#c8f526]">┌</span>
+            <span className="absolute -right-2.5 -top-2.5 font-mono text-xs font-bold text-[#c8f526]">┐</span>
+            <span className="absolute -bottom-2.5 -left-2.5 font-mono text-xs font-bold text-[#c8f526]">└</span>
+            <span className="absolute -bottom-2.5 -right-2.5 font-mono text-xs font-bold text-[#c8f526]">┘</span>
+
+            <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-[#c8f526] bg-[#041610] shadow-[0_0_15px_rgba(200,245,38,0.3)] sm:h-28 sm:w-28">
+              {photoPreviewUrl ? (
+                <img
+                  src={photoPreviewUrl}
+                  alt={`Photo of ${displayName}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <User className="h-10 w-10 text-[#c8f526]/40" aria-hidden="true" />
+              )}
+            </div>
+          </div>
+
+          {/* NAME & SCRIPT TAGLINE */}
+          <div className="mt-3 text-center">
+            <h2 className="font-syne text-xl font-extrabold uppercase tracking-wider text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-2xl">
+              {displayName}
+            </h2>
+            <p className="font-script text-base text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] sm:text-lg">
+              Build. Ship. Launch.
+            </p>
+          </div>
+        </div>
+
+        {/* TECHNICAL ROWS */}
+        <div className="space-y-2 pt-1">
+          {/* STACK / ROLE */}
+          <div className="flex items-center gap-2.5 rounded-xl border border-[#c8f526]/20 bg-[#061a13]/85 p-2 backdrop-blur-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#c8f526]/50 bg-[#041610] text-[#c8f526]">
+              <Code2 className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="block font-mono text-[7px] font-bold tracking-widest text-[#c8f526]/80 uppercase">
+                STACK / ROLE
+              </span>
+              <p className="truncate font-mono text-xs font-bold text-white uppercase">
+                {displayStack}
+              </p>
+              <p className="truncate font-mono text-[8px] text-white/50">
+                {displayDept}
+              </p>
+            </div>
+          </div>
+
+          {/* BUILDER TITLE */}
+          <div className="flex items-center gap-2.5 rounded-xl border border-[#c8f526]/20 bg-[#061a13]/85 p-2 backdrop-blur-xs">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#c8f526]/50 bg-[#041610] text-[#c8f526]">
+              <Crown className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="block font-mono text-[7px] font-bold tracking-widest text-[#c8f526]/80 uppercase">
+                BUILDER TITLE
+              </span>
+              <p className="truncate font-syne text-xs font-bold text-white uppercase">
+                {titleObj.title}
+              </p>
+              <p className="truncate font-mono text-[8px] text-white/50">
+                Ideas into impact.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* THE JOURNEY TIMELINE */}
+        <div className="pt-1">
+          <p className="mb-1 text-center font-mono text-[8px] font-bold tracking-[0.2em] text-[#c8f526]/80 uppercase">
+            THE JOURNEY
+          </p>
+
+          <div className="relative flex items-center justify-between px-2">
+            {/* Connecting dashed line */}
+            <div className="absolute left-6 right-6 top-3 -z-0 h-px border-t border-dashed border-[#c8f526]/40" />
+
+            {/* Step 1 */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#c8f526] bg-[#041610] text-[#c8f526]">
+                <Sprout className="h-3 w-3" />
+              </div>
+              <span className="mt-0.5 font-mono text-[6px] font-bold text-white/70">01</span>
+              <span className="font-mono text-[7px] font-bold text-[#c8f526]/90">GENESIS</span>
+            </div>
+
+            {/* Step 2 */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#c8f526] bg-[#041610] text-[#c8f526]">
+                <Triangle className="h-3 w-3" />
+              </div>
+              <span className="mt-0.5 font-mono text-[6px] font-bold text-white/70">02</span>
+              <span className="font-mono text-[7px] font-bold text-[#c8f526]/90">TRIANGLE</span>
+            </div>
+
+            {/* Step 3 */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#c8f526] bg-[#041610] text-[#c8f526]">
+                <Code2 className="h-3 w-3" />
+              </div>
+              <span className="mt-0.5 font-mono text-[6px] font-bold text-white/70">03</span>
+              <span className="font-mono text-[7px] font-bold text-[#c8f526]/90">BUILD</span>
+            </div>
+
+            {/* Step 4 */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full border border-[#c8f526] bg-[#041610] text-[#c8f526]">
+                <Rocket className="h-3 w-3" />
+              </div>
+              <span className="mt-0.5 font-mono text-[6px] font-bold text-white/70">04</span>
+              <span className="font-mono text-[7px] font-bold text-[#c8f526]/90">LAUNCH</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* DETAILS */}
-
-      <div
-        className="
-          mt-4
-          space-y-2.5
-          border-t
-          border-cream/10
-          px-5
-          py-4
-          font-mono
-          text-xs
-        "
-      >
-
-        {department && (
-          <DetailRow
-            icon={Building2}
-            label={
-              department
-            }
-          />
-        )}
-
+      {/* CARD FRONT FOOTER */}
+      <div className="relative z-10 flex items-center justify-between border-t border-[#c8f526]/20 pt-2 font-mono text-[8px]">
+        <div className="flex items-center gap-1 text-white/70">
+          <MapPin className="h-3 w-3 text-[#c8f526]" />
+          <span>GOA, INDIA</span>
+          <span className="text-white/40">|</span>
+          <span>28 - 31 OCT 2026</span>
+        </div>
+        <span className="font-bold text-[#c8f526]">#FrameInGoa</span>
       </div>
-
-      {/* FOOTER */}
-
-      <CardFooter
-        idNumber={idNumber}
-      />
-
     </div>
   );
 }
@@ -1586,230 +1573,100 @@ function FrontFace({
    BACK FACE
 ===================================================== */
 
-function BackFace({
-  idNumber,
-}) {
+function BackFace({ idNumber }) {
+  const displayId = idNumber && idNumber.trim() ? idNumber : "26-0427";
+
   return (
-    <div className="relative h-full w-full">
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden p-4 sm:p-5 text-white crisp-card select-none">
+      <CardBackground />
 
-      {/* HEADER */}
+      {/* TOP CONTENT LAYER */}
+      <div className="relative z-10 space-y-3">
+        {/* HEADER */}
+        <div className="flex items-center justify-between border-b border-[#c8f526]/25 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-[#c8f526] bg-[#041610] font-mono text-xs font-black text-[#c8f526] shadow-[0_0_8px_rgba(200,245,38,0.4)]">
+              HH
+            </div>
+            <div>
+              <p className="font-tech text-xs font-bold leading-none tracking-wider text-white">
+                HACKER HOUSE
+              </p>
+              <p className="font-mono text-[9px] font-bold tracking-[0.18em] text-[#c8f526]">
+                GOA · 2026
+              </p>
+            </div>
+          </div>
 
-      <div
-        className="
-          flex
-          items-center
-          justify-between
-          border-b-2
-          border-dashed
-          border-mustard/40
-          px-5
-          pb-4
-          pt-5
-        "
-      >
+          <div className="font-mono text-[9px] text-[#c8f526]/70">
+            ┌ ┐
+          </div>
+        </div>
 
+        {/* BLURB */}
+        <div className="px-1 text-left">
+          <p className="font-mono text-[10px] leading-relaxed text-white/85 sm:text-xs">
+            A residency for builders — hackers, designers, and founders shipping real projects together in{" "}
+            <span className="font-bold text-[#c8f526]">Goa.</span>
+          </p>
+        </div>
+
+        {/* QR CODE SECTION */}
+        <div className="relative flex flex-col items-center justify-center pt-1">
+          <div className="relative">
+            {/* Corner reticles */}
+            <span className="absolute -left-2.5 -top-2.5 font-mono text-xs font-bold text-[#c8f526]">┌</span>
+            <span className="absolute -right-2.5 -top-2.5 font-mono text-xs font-bold text-[#c8f526]">┐</span>
+            <span className="absolute -bottom-2.5 -left-2.5 font-mono text-xs font-bold text-[#c8f526]">└</span>
+            <span className="absolute -bottom-2.5 -right-2.5 font-mono text-xs font-bold text-[#c8f526]">┘</span>
+
+            <div className="rounded-2xl border-2 border-[#c8f526] bg-[#f4efe0] p-2.5 shadow-[0_0_15px_rgba(200,245,38,0.25)]">
+              <QRCodeSVG
+                value={HH_GOA_WEBSITE_URL}
+                size={108}
+                bgColor="#f4efe0"
+                fgColor="#041610"
+                level="M"
+              />
+            </div>
+          </div>
+
+          <p className="mt-2 font-mono text-[10px] font-bold tracking-widest text-[#c8f526]">
+            SCAN TO VISIT HH GOA
+          </p>
+          <p className="font-mono text-[9px] text-white/50">
+            {HH_GOA_WEBSITE_LABEL}
+          </p>
+        </div>
+
+        {/* ACCESS TERMINAL BOX */}
+        <div className="rounded-xl border border-[#c8f526]/30 bg-[#02120c]/90 p-2.5 font-mono text-[9px] backdrop-blur-xs">
+          {/* Terminal Title Bar */}
+          <div className="mb-1.5 flex items-center justify-between border-b border-[#c8f526]/20 pb-1 text-[#c8f526]">
+            <span className="font-bold tracking-wider">&gt; ACCESS TERMINAL</span>
+            <span className="text-white/40">- □ ×</span>
+          </div>
+
+          {/* Lines */}
+          <div className="space-y-0.5 text-white/80">
+            <p><span className="text-[#c8f526]">&gt; STATUS   :</span> BUILDER</p>
+            <p><span className="text-[#c8f526]">&gt; ACCESS   :</span> GRANTED</p>
+            <p><span className="text-[#c8f526]">&gt; MISSION  :</span> BUILD · SHIP · LAUNCH</p>
+            <p><span className="text-[#c8f526]">&gt; LOCATION :</span> GOA, INDIA</p>
+            <p><span className="text-[#c8f526]">&gt; UNIT     :</span> {displayId}</p>
+            <p className="text-[#c8f526] animate-pulse">&gt; _</p>
+          </div>
+        </div>
+      </div>
+
+      {/* CARD BACK FOOTER */}
+      <div className="relative z-10 flex items-center justify-between border-t border-[#c8f526]/20 pt-2 font-mono text-[9px]">
         <div>
-
-          <p
-            className="
-              font-display
-              text-base
-              leading-none
-              text-mustard
-            "
-          >
-            HACKER HOUSE
-          </p>
-
-          <p
-            className="
-              font-mono
-              text-[10px]
-              tracking-[0.2em]
-              text-cream/50
-            "
-          >
-            GOA · 2026
-          </p>
-
+          <span className="text-white/40">SERIAL NO. </span>
+          <span className="font-bold text-[#c8f526]">{displayId}</span>
         </div>
-
-        <QrCode
-          className="h-5 w-5 text-cream/40"
-          aria-hidden="true"
-        />
-
+        <Globe className="h-4 w-4 text-[#c8f526]/70" />
       </div>
-
-      {/* BLURB */}
-
-      <div className="px-5 pt-5">
-
-        <p
-          className="
-            font-body
-            text-xs
-            leading-relaxed
-            text-cream/70
-          "
-        >
-          {HH_GOA_BLURB}
-        </p>
-
-      </div>
-
-      {/* QR */}
-
-      <div
-        className="
-          flex
-          flex-col
-          items-center
-          px-5
-          pt-6
-        "
-      >
-
-        <div
-          className="
-            rounded-2xl
-            border-3
-            border-mustard
-            bg-cream
-            p-3
-          "
-        >
-
-          <QRCodeSVG
-            value={
-              HH_GOA_WEBSITE_URL
-            }
-            size={112}
-            bgColor="#FBF3DD"
-            fgColor="#0E1F17"
-            level="M"
-          />
-
-        </div>
-
-        <p
-          className="
-            mt-3
-            font-mono
-            text-[10px]
-            font-bold
-            tracking-widest
-            text-mustard
-          "
-        >
-          SCAN TO VISIT HH GOA
-        </p>
-
-        <p
-          className="
-            mt-1
-            font-mono
-            text-[10px]
-            text-cream/50
-          "
-        >
-          {HH_GOA_WEBSITE_LABEL}
-        </p>
-
-      </div>
-
-      {/* FOOTER */}
-
-      <CardFooter
-        idNumber={idNumber}
-      />
-
-    </div>
-  );
-}
-
-/* =====================================================
-   CARD FOOTER
-===================================================== */
-
-function CardFooter({
-  idNumber,
-}) {
-  return (
-    <div
-      className="
-        absolute
-        inset-x-0
-        bottom-0
-        flex
-        items-center
-        justify-between
-        border-t-2
-        border-dashed
-        border-mustard/40
-        bg-forest-dark/60
-        px-5
-        py-3
-      "
-    >
-
-      <span
-        className="
-          font-mono
-          text-[10px]
-          text-cream/40
-        "
-      >
-        SERIAL NO.
-      </span>
-
-      <span
-        className="
-          font-mono
-          text-xs
-          font-bold
-          text-mustard
-        "
-      >
-        {idNumber}
-      </span>
-
-    </div>
-  );
-}
-
-/* =====================================================
-   DETAIL ROW
-===================================================== */
-
-function DetailRow({
-  icon: Icon,
-  label,
-}) {
-  return (
-    <div
-      className="
-        flex
-        items-center
-        gap-2
-        text-cream/70
-      "
-    >
-
-      <Icon
-        className="
-          h-3.5
-          w-3.5
-          shrink-0
-          text-mustard/70
-        "
-        aria-hidden="true"
-      />
-
-      <span className="truncate">
-        {label}
-      </span>
-
     </div>
   );
 }

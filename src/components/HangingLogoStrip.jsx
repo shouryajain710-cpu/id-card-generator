@@ -31,9 +31,9 @@ export default function HangingLogoStrip({
           justify-center
           rounded-lg
           border-2
-          border-ink
-          bg-mustard
-          shadow-[3px_3px_0_#000]
+          border-[#c8f526]
+          bg-[#041610]
+          shadow-[0_4px_10px_rgba(0,0,0,0.6)]
         "
         animate={
           prefersReducedMotion
@@ -62,10 +62,11 @@ export default function HangingLogoStrip({
       >
         <span
           className="
-            font-display
-            text-[11px]
-            leading-none
-            text-forest-dark
+            font-mono
+            text-xs
+            font-black
+            tracking-tighter
+            text-[#c8f526]
           "
         >
           HH
@@ -80,9 +81,9 @@ export default function HangingLogoStrip({
             h-2
             w-4
             rounded-full
-            border-2
-            border-ink
-            bg-mustard
+            border
+            border-[#c8f526]/60
+            bg-[#092219]
           "
         />
       </motion.div>
@@ -140,7 +141,7 @@ export default function HangingLogoStrip({
         >
           <defs>
 
-            {/* Diagonal HH Goa stripes */}
+            {/* Dark woven cyber lanyard stripes */}
 
             <pattern
               id="hhgoaRibbonPattern"
@@ -152,16 +153,25 @@ export default function HangingLogoStrip({
               <rect
                 width="16"
                 height="16"
-                fill="#FFD500"
+                fill="#061c14"
               />
 
               <rect
                 x="0"
                 y="0"
-                width="7"
+                width="2"
                 height="16"
-                fill="#004D3B"
-                transform="skewX(-18)"
+                fill="#c8f526"
+                opacity="0.85"
+              />
+
+              <rect
+                x="14"
+                y="0"
+                width="2"
+                height="16"
+                fill="#c8f526"
+                opacity="0.85"
               />
             </pattern>
 
@@ -179,7 +189,7 @@ export default function HangingLogoStrip({
                 dy="2"
                 stdDeviation="1.2"
                 floodColor="#000000"
-                floodOpacity="0.35"
+                floodOpacity="0.65"
               />
             </filter>
 
@@ -187,9 +197,6 @@ export default function HangingLogoStrip({
 
           {/* =================================================
               FLEXIBLE RIBBON SHAPE
-
-              The sides intentionally curve instead of
-              staying perfectly vertical.
           ================================================== */}
 
           <motion.path
@@ -208,7 +215,7 @@ export default function HangingLogoStrip({
               Z
             "
             fill="url(#hhgoaRibbonPattern)"
-            stroke="#111111"
+            stroke="#041610"
             strokeWidth="2"
             vectorEffect="non-scaling-stroke"
             filter="url(#ribbonShadow)"
@@ -285,22 +292,22 @@ export default function HangingLogoStrip({
               C 12 150, 17 180, 15 220
             "
             fill="none"
-            stroke="#FFF59D"
+            stroke="#c8f526"
             strokeWidth="1"
             strokeLinecap="round"
-            opacity="0.55"
+            opacity="0.4"
             animate={
               prefersReducedMotion
                 ? {
-                    opacity: 0.55,
+                    opacity: 0.4,
                   }
                 : {
                     opacity: [
+                      0.2,
+                      0.5,
                       0.25,
-                      0.6,
-                      0.3,
-                      0.55,
-                      0.25,
+                      0.45,
+                      0.2,
                     ],
                   }
             }
@@ -322,15 +329,15 @@ export default function HangingLogoStrip({
             absolute
             bottom-[-2px]
             left-1/2
-            h-2
+            h-2.5
             w-5
             -translate-x-1/2
             rounded-b-md
             border-x-2
             border-b-2
-            border-ink
-            bg-mustard
-            shadow-[1px_1px_0_#000]
+            border-[#c8f526]
+            bg-[#041610]
+            shadow-[0_2px_4px_rgba(0,0,0,0.5)]
           "
         />
 

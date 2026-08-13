@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Bungee&family=Baloo+2:wght@600;700;800&family=Yatra+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&family=Bungee&family=Baloo+2:wght@600;700;800&family=Yatra+One&family=Rajdhani:wght@600;700&family=Syne:wght@700;800&family=Caveat:wght@600;700&display=swap');
 
 @import "tailwindcss";
 
@@ -10,6 +10,10 @@
   --color-mustard: #f5df00;
   --color-flamingo: #ed1670;
 
+  --color-cyber-neon: #c8f526;
+  --color-cyber-dark: #041610;
+  --color-cyber-card: #082218;
+
   --color-cream: #f7f0dc;
   --color-white: #fffdf4;
   --color-ink: #062d20;
@@ -17,6 +21,10 @@
   --font-display: "Abril Fatface", serif;
   --font-mono: "Space Mono", monospace;
   --font-body: "Inter", sans-serif;
+
+  --font-tech: "Rajdhani", "Space Mono", sans-serif;
+  --font-syne: "Syne", "Inter", sans-serif;
+  --font-script: "Caveat", cursive;
 
   /* Bold street/graffiti wordmark font, used for "HACKER HOUSE" */
   --font-graffiti: "Bungee", "Abril Fatface", cursive;
@@ -178,4 +186,24 @@ a {
     animation: none;
   }
 }
+
+/* Crisp rendering utilities to prevent blurriness during 3D transform */
+.crisp-card {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Neon glow helper */
+.cyber-glow-neon {
+  box-shadow: 0 0 12px rgba(200, 245, 38, 0.35);
+}
+
+.cyber-glow-text {
+  text-shadow: 0 0 8px rgba(200, 245, 38, 0.5);
+}
+
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useId } from "react";
-import { Upload, ImagePlus, Trash2, AlertCircle } from "lucide-react";
+import { Upload, ImagePlus, Trash2, AlertCircle, Loader2 } from "lucide-react";
 
+<<<<<<< HEAD
 const ACCEPTED_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -13,6 +14,9 @@ const ACCEPTED_TYPES = [
 ];
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+=======
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB for raw photos
+>>>>>>> 5ecd5c3 (Heic file addition)
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -20,13 +24,88 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+async function isHeicFile(file) {
+  if (!file) return false;
+  const type = (file.type || "").toLowerCase();
+  const name = (file.name || "").toLowerCase();
+
+  if (
+    type.includes("heic") ||
+    type.includes("heif") ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  );
+  if (
+    type.includes("heic") ||
+    type.includes("heif") ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  ) {
+    return true;
+  }
+
+  // Magic bytes check for HEIC/HEIF (ftyp box at byte offset 4)
+  try {
+    const slice = file.slice(0, 12);
+    const buffer = await slice.arrayBuffer();
+    if (buffer.byteLength >= 12) {
+      const view = new DataView(buffer);
+      const ftyp = String.fromCharCode(
+        view.getUint8(4),
+        view.getUint8(5),
+        view.getUint8(6),
+        view.getUint8(7)
+      );
+      if (ftyp === "ftyp") {
+        const brand = String.fromCharCode(
+          view.getUint8(8),
+          view.getUint8(9),
+          view.getUint8(10),
+          view.getUint8(11)
+        ).toLowerCase();
+        if (
+          brand.includes("heic") ||
+          brand.includes("heif") ||
+          brand.includes("mif1") ||
+          brand.includes("msf1") ||
+          brand.includes("hevc")
+        ) {
+          return true;
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore arrayBuffer error if file is restricted
+  }
+
+  return false;
+}
+
+async function isSupportedImage(file) {
+  if (await isHeicFile(file)) return true;
+  const type = (file.type || "").toLowerCase();
+  const name = (file.name || "").toLowerCase();
+
+  if (type.startsWith("image/")) return true;
+
+  const validExtensions = [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+    ".avif",
+    ".gif",
+    ".bmp",
+    ".heic",
+    ".heif",
+    ".svg",
+  ];
+  return validExtensions.some((ext) => name.endsWith(ext));
+}
+
 /**
  * PhotoUploader
- * Selects and validates a photo, then hands the raw File to the parent via
- * `onImageSelect` — the parent is responsible for opening PhotoEditor and
- * producing a processed image. This component no longer owns any preview
- * object URL itself: what it displays is entirely controlled by the
- * `previewUrl` prop, so it never has cropping/processing logic of its own.
+ * Robust photo uploader with client-side HEIC/HEIF conversion to JPEG.
  */
 export default function PhotoUploader({
   onImageSelect,
@@ -36,6 +115,7 @@ export default function PhotoUploader({
   fileSize,
 }) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState(null);
 
   const inputRef = useRef(null);
@@ -43,6 +123,7 @@ export default function PhotoUploader({
   const errorId = useId();
   const infoId = useId();
 
+<<<<<<< HEAD
   const validateFile = (candidate) => {
     const fileName = candidate.name?.toLowerCase() || "";
     const fileType = candidate.type?.toLowerCase() || "";
@@ -59,32 +140,88 @@ export default function PhotoUploader({
 
     if (!isAcceptedType && !isAcceptedExtension) {
       return "Please upload a JPG, PNG, WEBP, or HEIC image.";
+=======
+  const validateFile = async (candidate) => {
+    if (!(await isSupportedImage(candidate))) {
+      return "Please upload a valid image file (JPG, JPEG, PNG, WEBP, HEIC, etc.).";
+>>>>>>> 5ecd5c3 (Heic file addition)
     }
 
     if (candidate.size > MAX_FILE_SIZE_BYTES) {
-      return "Image must be smaller than 5 MB.";
+      return "Image must be smaller than 25 MB.";
     }
 
     return null;
   };
 
+<<<<<<< HEAD
   const acceptFile = (candidate) => {
     const validationError = validateFile(candidate);
 
+=======
+  const acceptFile = async (candidate) => {
+    const validationError = await validateFile(candidate);
+>>>>>>> 5ecd5c3 (Heic file addition)
     if (validationError) {
       setError(validationError);
       return;
     }
 
     setError(null);
+
+    const isHeic = await isHeicFile(candidate);
+
+    // Convert HEIC / HEIF to JPEG for browser rendering & canvas compatibility
+    if (isHeic) {
+      setIsConverting(true);
+      try {
+        // Dynamically import heic2any on demand for code-splitting
+        const heicModule = await import("heic2any");
+        const convertFn =
+          typeof heicModule.default === "function"
+            ? heicModule.default
+            : typeof heicModule === "function"
+            ? heicModule
+            : window.heic2any;
+
+        if (!convertFn) {
+          throw new Error("HEIC converter is not initialized.");
+        }
+
+        const result = await convertFn({
+          blob: candidate,
+          toType: "image/jpeg",
+          quality: 0.92,
+        });
+
+        const convertedBlob = Array.isArray(result) ? result[0] : result;
+        const newName = candidate.name.replace(/\.(heic|heif)$/i, "") + ".jpg";
+        const convertedFile = new File([convertedBlob], newName, {
+          type: "image/jpeg",
+        });
+
+        onImageSelect?.(convertedFile);
+      } catch (err) {
+        console.error("HEIC conversion error:", err);
+        setError("Could not convert HEIC photo. Please try a JPG or PNG.");
+      } finally {
+        setIsConverting(false);
+      }
+      return;
+    }
+
+    // Standard image files
     onImageSelect?.(candidate);
   };
 
   const handleInputChange = (e) => {
     const selected = e.target.files?.[0];
+<<<<<<< HEAD
 
     // Reset immediately so re-selecting the exact same file (e.g. after
     // Cancel in the editor) still fires a change event next time.
+=======
+>>>>>>> 5ecd5c3 (Heic file addition)
     e.target.value = "";
 
     if (selected) acceptFile(selected);
@@ -159,19 +296,34 @@ export default function PhotoUploader({
   return (
     <div className="w-full font-body">
       <label htmlFor={`photo-upload-${errorId}`} className="sr-only">
+<<<<<<< HEAD
         Upload profile photo (JPG, PNG, WEBP, or HEIC, up to 5 MB)
+=======
+        Upload profile photo (JPG, JPEG, PNG, WEBP, or HEIC)
+>>>>>>> 5ecd5c3 (Heic file addition)
       </label>
 
       <input
         ref={inputRef}
         id={`photo-upload-${errorId}`}
         type="file"
+<<<<<<< HEAD
         accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif"
+=======
+        accept="image/*,.heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/heic-sequence,image/heif-sequence"
+>>>>>>> 5ecd5c3 (Heic file addition)
         onChange={handleInputChange}
         className="sr-only"
       />
 
-      {!hasImage ? (
+      {isConverting ? (
+        <div className="flex w-full items-center justify-center gap-3 rounded-xl border-3 border-mustard bg-forest p-4 text-cream">
+          <Loader2 className="h-6 w-6 animate-spin text-mustard" aria-hidden="true" />
+          <span className="font-mono text-xs font-bold text-mustard">
+            Converting HEIC photo to JPG...
+          </span>
+        </div>
+      ) : !hasImage ? (
         <div
           role="button"
           tabIndex={0}
@@ -210,7 +362,11 @@ export default function PhotoUploader({
             </p>
 
             <p id={infoId} className="mt-1 font-mono text-[11px] text-cream/60">
+<<<<<<< HEAD
               JPG, PNG, WEBP, HEIC &middot; up to 5MB
+=======
+              JPG, JPEG, PNG, WEBP, HEIC &middot; up to 15MB
+>>>>>>> 5ecd5c3 (Heic file addition)
             </p>
           </div>
 

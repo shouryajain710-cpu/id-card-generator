@@ -37,16 +37,16 @@ import HangingLogoStrip from "./HangingLogoStrip";
 import ShareToXButton from "./ShareToXButton";
 
 import { getRoleTitle } from "../utils/roleTitles";
+import { canvasToHeicBlob } from "../utils/encodeHeic";
 
 import nightBackImg from "../assets/nightBack.jpg";
 
 export default function IDCardPreview({
   data,
   photoPreviewUrl,
+  downloadFormat = "png",
 }) {
   const [side, setSide] = useState("front");
-  const [downloadSide, setDownloadSide] =
-    useState("front");
 
   const [isDownloading, setIsDownloading] =
     useState(false);
@@ -587,7 +587,7 @@ export default function IDCardPreview({
      EXPORT CARD
   ===================================================== */
 
-  const exportCard =
+  const exportCardToCanvas =
     async (element) => {
       if (!element) {
         throw new Error(
@@ -626,29 +626,24 @@ export default function IDCardPreview({
           await iframe.contentDocument.fonts.ready;
         }
 
-        const canvas =
-          await html2canvas(
-            clone,
-            {
-              window:
-                iframe.contentWindow,
-              scale: 3,
-              backgroundColor:
-                "#041610",
-              allowTaint: true,
-              useCORS: true,
-              logging: false,
-              foreignObjectRendering:
-                false,
-              width:
-                element.offsetWidth,
-              height:
-                element.offsetHeight,
-            }
-          );
-
-        return canvas.toDataURL(
-          "image/png"
+        return await html2canvas(
+          clone,
+          {
+            window:
+              iframe.contentWindow,
+            scale: 3,
+            backgroundColor:
+              "#041610",
+            allowTaint: true,
+            useCORS: true,
+            logging: false,
+            foreignObjectRendering:
+              false,
+            width:
+              element.offsetWidth,
+            height:
+              element.offsetHeight,
+          }
         );
       } catch (error) {
         console.error(
@@ -695,153 +690,59 @@ export default function IDCardPreview({
       try {
         const baseName =
           getBaseFileName();
+        const extension =
+          downloadFormat === "heic"
+            ? "heic"
+            : "png";
 
-        if (
-          downloadSide ===
-          "front"
-        ) {
-          const dataUrl =
-            await exportCard(
-              getExportElement(
-                frontRef
-              )
+        const downloadCanvasAsPng =
+          async (
+            canvas,
+            filename
+          ) => {
+            downloadDataUrl(
+              canvas.toDataURL(
+                "image/png"
+              ),
+              filename
             );
+          };
 
-          downloadDataUrl(
-            dataUrl,
-            `${baseName}-front.png`
+        const downloadCanvasAsHeic =
+          async (
+            canvas,
+            filename
+          ) => {
+            const blob =
+              await canvasToHeicBlob(
+                canvas
+              );
+
+            downloadBlob(
+              blob,
+              filename
+            );
+          };
+
+        const downloadCanvas =
+          downloadFormat === "heic"
+            ? downloadCanvasAsHeic
+            : downloadCanvasAsPng;
+
+        const canvas =
+          await exportCardToCanvas(
+            getExportElement(
+              side === "back" ? backRef : frontRef,
+              side === "back"
+                ? { skip3dWrapper: true }
+                : undefined
+            )
           );
 
-          return;
-        }
-
-        if (
-          downloadSide ===
-          "back"
-        ) {
-          const dataUrl =
-            await exportCard(
-              getExportElement(
-                backRef,
-                {
-                  skip3dWrapper: true,
-                }
-              )
-            );
-
-          downloadDataUrl(
-            dataUrl,
-            `${baseName}-back.png`
-          );
-
-          return;
-        }
-
-        if (
-          downloadSide ===
-          "both"
-        ) {
-          const frontDataUrl =
-            await exportCard(
-              getExportElement(
-                frontRef
-              )
-            );
-
-          const backDataUrl =
-            await exportCard(
-              getExportElement(
-                backRef,
-                {
-                  skip3dWrapper: true,
-                }
-              )
-            );
-
-          const frontImage =
-            await loadImage(
-              frontDataUrl
-            );
-
-          const backImage =
-            await loadImage(
-              backDataUrl
-            );
-
-          const gap = 60;
-
-          const canvasWidth =
-            frontImage.width +
-            backImage.width +
-            gap;
-
-          const canvasHeight =
-            Math.max(
-              frontImage.height,
-              backImage.height
-            );
-
-          const canvas =
-            document.createElement(
-              "canvas"
-            );
-
-          canvas.width =
-            canvasWidth;
-
-          canvas.height =
-            canvasHeight;
-
-          const ctx =
-            canvas.getContext(
-              "2d"
-            );
-
-          if (!ctx) {
-            throw new Error(
-              "Could not create canvas context."
-            );
-          }
-
-          ctx.fillStyle =
-            "#041610";
-
-          ctx.fillRect(
-            0,
-            0,
-            canvasWidth,
-            canvasHeight
-          );
-
-          ctx.drawImage(
-            frontImage,
-            0,
-            (
-              canvasHeight -
-              frontImage.height
-            ) / 2
-          );
-
-          ctx.drawImage(
-            backImage,
-            frontImage.width +
-              gap,
-            (
-              canvasHeight -
-              backImage.height
-            ) / 2
-          );
-
-          const combinedDataUrl =
-            canvas.toDataURL(
-              "image/png"
-            );
-
-          downloadDataUrl(
-            combinedDataUrl,
-            `${baseName}-both.png`
-          );
-        }
+        await downloadCanvas(
+          canvas,
+          `${baseName}-${side}.${extension}`
+        );
       } catch (error) {
         const errorMsg =
           error instanceof Error
@@ -1202,118 +1103,9 @@ export default function IDCardPreview({
         DRAG TO SPIN · MOVE TO TILT · TAP TO FLIP
       </p>
 
-      {/* DOWNLOAD CONTROLS */}
+      {/* DOWNLOAD */}
 
       <div className="mt-5 flex flex-col items-center gap-3">
-
-        <div
-          className="
-            inline-flex
-            items-center
-            rounded-full
-            border-2
-            border-mustard
-            bg-forest-dark
-            p-1
-          "
-          aria-label="Choose card side to download"
-        >
-
-          <button
-            type="button"
-            onClick={() =>
-              setDownloadSide(
-                "front"
-              )
-            }
-            aria-pressed={
-              downloadSide ===
-              "front"
-            }
-            className={`
-              rounded-full
-              px-4
-              py-1.5
-              font-mono
-              text-xs
-              font-bold
-              transition-colors
-              duration-150
-              ${
-                downloadSide ===
-                "front"
-                  ? "bg-mustard text-ink"
-                  : "text-cream/60 hover:text-cream"
-              }
-            `}
-          >
-            Front
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setDownloadSide(
-                "back"
-              )
-            }
-            aria-pressed={
-              downloadSide ===
-              "back"
-            }
-            className={`
-              rounded-full
-              px-4
-              py-1.5
-              font-mono
-              text-xs
-              font-bold
-              transition-colors
-              duration-150
-              ${
-                downloadSide ===
-                "back"
-                  ? "bg-mustard text-ink"
-                  : "text-cream/60 hover:text-cream"
-              }
-            `}
-          >
-            Back
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setDownloadSide(
-                "both"
-              )
-            }
-            aria-pressed={
-              downloadSide ===
-              "both"
-            }
-            className={`
-              rounded-full
-              px-4
-              py-1.5
-              font-mono
-              text-xs
-              font-bold
-              transition-colors
-              duration-150
-              ${
-                downloadSide ===
-                "both"
-                  ? "bg-mustard text-ink"
-                  : "text-cream/60 hover:text-cream"
-              }
-            `}
-          >
-            Both
-          </button>
-
-        </div>
-
         <button
           type="button"
           onClick={
@@ -1342,24 +1134,16 @@ export default function IDCardPreview({
             disabled:opacity-50
           "
         >
-
           <Download
             className="h-4 w-4"
             aria-hidden="true"
           />
 
           {isDownloading
-            ? "Preparing PNG..."
-            : `Download ${
-                downloadSide ===
-                "both"
-                  ? "Both"
-                  : downloadSide ===
-                    "front"
-                  ? "Front"
-                  : "Back"
-              }`}
-
+            ? downloadFormat === "heic"
+              ? "Preparing HEIC..."
+              : "Preparing PNG..."
+            : `Download ${downloadFormat.toUpperCase()}`}
         </button>
         <ShareToXButton/>
       </div>
@@ -1374,39 +1158,25 @@ export default function IDCardPreview({
 
 function CardBackground() {
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
-      {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b] via-[#051c14] to-[#08291d]" />
-      
-      {/* Sunset Horizon Glow */}
-      <div className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full bg-gradient-to-tr from-[#ff9100] to-[#ffd000] opacity-40 blur-xl" />
-      <div className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full bg-[#ffd000] opacity-30 blur-lg" />
-      
-      {/* Palm Trees & Beach Silhouette SVG */}
-      <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 320 512" preserveAspectRatio="xMidYMid slice" fill="none">
-        {/* Palm tree left */}
-        <path d="M-10 240 Q40 190 60 110 Q50 90 20 80 Q60 70 80 100 Q90 60 50 40 Q100 40 100 80 Q120 50 140 70 Q110 90 80 110 Q120 180 80 260 Z" fill="#010a06" />
-        <path d="M-20 340 Q30 290 50 200 Q80 280 -10 360 Z" fill="#010a06" />
-        
-        {/* Palm tree right */}
-        <path d="M330 200 Q270 160 250 80 Q270 60 300 60 Q260 40 240 70 Q230 30 260 20 Q210 20 220 60 Q190 30 180 60 Q210 80 230 100 Q200 170 250 240 Z" fill="#010a06" />
-        <path d="M340 320 Q280 270 260 180 Q230 260 330 340 Z" fill="#010a06" />
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+      <img
+        src={nightBackImg}
+        alt=""
+        aria-hidden="true"
+        className="h-full w-full object-cover"
+      />
 
-        {/* Shore & Waters */}
-        <path d="M0 380 Q100 370 200 400 T320 390 L320 512 L0 512 Z" fill="#020e08" />
-        <path d="M0 430 Q120 420 240 450 T320 440 L320 512 L0 512 Z" fill="#010805" />
-      </svg>
-      
-      {/* Cyber Grid Dots Overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(#c8f526_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
-      
-      {/* Dark vignette */}
-      <div 
+      {/* Dark overlay so card text stays readable */}
+      <div
         className="absolute inset-0"
         style={{
-          backgroundImage: "linear-gradient(to bottom, rgba(3, 17, 11, 0.8), transparent, rgba(3, 17, 11, 0.9))"
+          backgroundImage:
+            "linear-gradient(to bottom, rgba(3, 17, 11, 0.72), rgba(3, 17, 11, 0.35), rgba(3, 17, 11, 0.82))",
         }}
       />
+
+      {/* Subtle cyber grid */}
+      <div className="absolute inset-0 bg-[radial-gradient(#c8f526_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
     </div>
   );
 }
@@ -2212,6 +1982,16 @@ async function waitForImages(
 /* =====================================================
    DOWNLOAD DATA URL
 ===================================================== */
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+
+  try {
+    downloadDataUrl(url, filename);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 function downloadDataUrl(
   dataUrl,

@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import PhotoUploader from "./PhotoUploader";
 import PhotoEditor from "./PhotoEditor";
+import {
+  heicFileToJpegFile,
+  isHeicFile,
+} from "../utils/decodeHeic";
 
 const DESIGNATION_PRESETS = [
   { label: "Web Developer", value: "Web Developer" },
@@ -15,10 +19,13 @@ export default function IDCardForm({
   onChange,
   onImageSelect,
   onPreviewChange,
+  onUploadFormatChange,
   section = "all",
 }) {
   const [rawFile, setRawFile] = useState(null);
   const [processedPhoto, setProcessedPhoto] = useState(null);
+  const [isPreparingPhoto, setIsPreparingPhoto] = useState(false);
+  const [photoPrepareError, setPhotoPrepareError] = useState(null);
 
   // Only clean up the object URL.
   // Do not update the parent from this effect.
@@ -30,7 +37,30 @@ export default function IDCardForm({
     };
   }, [processedPhoto?.url]);
 
-  const handleRawSelect = (file) => {
+  const handleRawSelect = async (file) => {
+    setPhotoPrepareError(null);
+
+    if (isHeicFile(file)) {
+      onUploadFormatChange?.("heic");
+      setIsPreparingPhoto(true);
+
+      try {
+        const jpegFile = await heicFileToJpegFile(file);
+        setRawFile(jpegFile);
+      } catch (error) {
+        setPhotoPrepareError(
+          error instanceof Error
+            ? error.message
+            : "Could not open HEIC photo."
+        );
+      } finally {
+        setIsPreparingPhoto(false);
+      }
+
+      return;
+    }
+
+    onUploadFormatChange?.("png");
     setRawFile(file);
   };
 
@@ -63,6 +93,7 @@ export default function IDCardForm({
 
   const handleRemovePhoto = () => {
     setProcessedPhoto(null);
+    onUploadFormatChange?.("png");
 
     // Update parent directly when photo is removed.
     onImageSelect?.(null);
@@ -95,6 +126,9 @@ export default function IDCardForm({
               previewUrl={processedPhoto?.url ?? null}
               fileName={processedPhoto?.file?.name}
               fileSize={processedPhoto?.file?.size}
+              isProcessing={isPreparingPhoto}
+              processingMessage="Converting HEIC photo…"
+              error={photoPrepareError}
             />
 
             {rawFile && (

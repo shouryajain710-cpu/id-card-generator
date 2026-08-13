@@ -16,6 +16,7 @@ const initialFormData = {
 export default function IDCreator() {
   const [formData, setFormData] = useState(initialFormData);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState(null);
+  const [photoDownloadFormat, setPhotoDownloadFormat] = useState("png");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,6 +83,7 @@ export default function IDCreator() {
               onChange={handleChange}
               onImageSelect={handleImageSelect}
               onPreviewChange={handlePreviewChange}
+              onUploadFormatChange={setPhotoDownloadFormat}
             />
           </section>
 
@@ -90,6 +92,7 @@ export default function IDCreator() {
             <IDCardPreview
               data={formData}
               photoPreviewUrl={photoPreviewUrl}
+              downloadFormat={photoDownloadFormat}
             />
           </section>
         </div>

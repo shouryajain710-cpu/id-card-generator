@@ -34,6 +34,9 @@ export default function PhotoUploader({
   previewUrl,
   fileName,
   fileSize,
+  isProcessing = false,
+  processingMessage = "Processing photo…",
+  error: externalError = null,
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState(null);
@@ -155,6 +158,7 @@ export default function PhotoUploader({
   };
 
   const hasImage = Boolean(previewUrl);
+  const displayError = externalError || error;
 
   return (
     <div className="w-full font-body">
@@ -175,46 +179,62 @@ export default function PhotoUploader({
         <div
           role="button"
           tabIndex={0}
-          aria-describedby={error ? errorId : infoId}
-          onClick={openFilePicker}
-          onKeyDown={handleKeyDown}
-          onDragEnter={handleDragEnter}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          aria-describedby={displayError ? errorId : infoId}
+          aria-busy={isProcessing}
+          onClick={isProcessing ? undefined : openFilePicker}
+          onKeyDown={isProcessing ? undefined : handleKeyDown}
+          onDragEnter={isProcessing ? undefined : handleDragEnter}
+          onDragOver={isProcessing ? undefined : handleDragOver}
+          onDragLeave={isProcessing ? undefined : handleDragLeave}
+          onDrop={isProcessing ? undefined : handleDrop}
           className={`
-            group relative flex w-full cursor-pointer items-center gap-3
+            group relative flex w-full items-center gap-3
             rounded-xl border-3 border-dashed px-4 py-4 text-left
             transition-all duration-200 ease-out
             ${
-              isDragging
-                ? "scale-[1.01] border-flamingo bg-forest-dark"
-                : "border-mustard/70 bg-forest hover:border-mustard hover:bg-forest-dark"
+              isProcessing
+                ? "cursor-wait border-mustard bg-forest-dark"
+                : "cursor-pointer"
             }
-            ${error ? "border-flamingo/80" : ""}
+            ${
+              !isProcessing && isDragging
+                ? "scale-[1.01] border-flamingo bg-forest-dark"
+                : !isProcessing
+                  ? "border-mustard/70 bg-forest hover:border-mustard hover:bg-forest-dark"
+                  : ""
+            }
+            ${displayError ? "border-flamingo/80" : ""}
             focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mustard
           `}
         >
           <Upload
             className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
-              isDragging
-                ? "scale-110 text-flamingo"
-                : "text-mustard group-hover:-translate-y-0.5"
+              isProcessing
+                ? "animate-pulse text-mustard"
+                : isDragging
+                  ? "scale-110 text-flamingo"
+                  : "text-mustard group-hover:-translate-y-0.5"
             }`}
             aria-hidden="true"
           />
 
           <div className="min-w-0">
             <p className="font-display text-base leading-none text-cream">
-              {isDragging ? "Drop it here" : "Click or drag a photo"}
+              {isProcessing
+                ? processingMessage
+                : isDragging
+                  ? "Drop it here"
+                  : "Click or drag a photo"}
             </p>
 
             <p id={infoId} className="mt-1 font-mono text-[11px] text-cream/60">
-              JPG, PNG, WEBP, HEIC &middot; up to 5MB
+              {isProcessing
+                ? "This may take a few seconds on first upload"
+                : "JPG, PNG, WEBP, HEIC · up to 5MB"}
             </p>
           </div>
 
-          {error && (
+          {displayError && (
             <div
               id={errorId}
               role="alert"
@@ -224,7 +244,7 @@ export default function PhotoUploader({
                 className="h-3.5 w-3.5 shrink-0"
                 aria-hidden="true"
               />
-              <span>{error}</span>
+              <span>{displayError}</span>
             </div>
           )}
         </div>

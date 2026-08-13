@@ -15,19 +15,78 @@ import { getCroppedImageBlob } from "../utils/cropImage";
  */
 export default function PhotoEditor({ file, onApply, onCancel }) {
   const [imageUrl, setImageUrl] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
-    if (!file) return undefined;
-    const url = URL.createObjectURL(file);
-    setImageUrl(url);
-    return () => URL.revokeObjectURL(url);
+    if (!file) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let objectUrl = null;
+
+    const loadImage = async () => {
+      setIsLoadingImage(true);
+      setLoadError(null);
+      setImageUrl(null);
+
+      try {
+        objectUrl = URL.createObjectURL(file);
+
+        const image = new Image();
+        image.src = objectUrl;
+
+        await new Promise((resolve, reject) => {
+          image.onload = () => resolve();
+          image.onerror = () =>
+            reject(
+              new Error(
+                "This image format is not supported in your browser."
+              )
+            );
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        setImageUrl(objectUrl);
+      } catch (error) {
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          objectUrl = null;
+        }
+
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Failed to load image."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingImage(false);
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
   }, [file]);
 
-  // Reset crop/zoom whenever a new file comes in (e.g. user replaces photo).
   useEffect(() => {
     setCrop({ x: 0, y: 0 });
     setZoom(1);
@@ -44,36 +103,35 @@ export default function PhotoEditor({ file, onApply, onCancel }) {
   };
 
   const handleApply = async () => {
-  console.log("Apply clicked");
-  console.log("imageUrl:", imageUrl);
-  console.log("croppedAreaPixels:", croppedAreaPixels);
+    if (!imageUrl || !croppedAreaPixels) {
+      return;
+    }
 
-  if (!imageUrl || !croppedAreaPixels) {
-    console.log("Missing imageUrl or croppedAreaPixels");
-    return;
+    setIsApplying(true);
+
+    try {
+      const outputType =
+        file.type?.startsWith("image/")
+          ? file.type
+          : "image/jpeg";
+
+      const blob = await getCroppedImageBlob(
+        imageUrl,
+        croppedAreaPixels,
+        outputType
+      );
+
+      onApply(blob);
+    } catch (err) {
+      console.error("Failed to crop image:", err);
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  if (!file) {
+    return null;
   }
-
-  setIsApplying(true);
-
-  try {
-    const blob = await getCroppedImageBlob(
-      imageUrl,
-      croppedAreaPixels,
-      file.type
-    );
-
-    console.log("Crop successful:", blob);
-
-    onApply(blob);
-
-  } catch (err) {
-    console.error("Failed to crop image:", err);
-  } finally {
-    setIsApplying(false);
-  }
-};
-
-  if (!file || !imageUrl) return null;
 
   return (
     <div
@@ -98,17 +156,31 @@ export default function PhotoEditor({ file, onApply, onCancel }) {
         </div>
 
         <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-ink">
-          <Cropper
-            image={imageUrl}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            cropShape="round"
-            showGrid={false}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={handleCropComplete}
-          />
+          {isLoadingImage && (
+            <div className="absolute inset-0 flex items-center justify-center font-mono text-xs text-cream/70">
+              Loading photo…
+            </div>
+          )}
+
+          {loadError && (
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-center font-mono text-xs text-flamingo">
+              {loadError}
+            </div>
+          )}
+
+          {imageUrl && !loadError && (
+            <Cropper
+              image={imageUrl}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={handleCropComplete}
+            />
+          )}
         </div>
 
         <div className="mt-5">
@@ -124,6 +196,7 @@ export default function PhotoEditor({ file, onApply, onCancel }) {
             value={zoom}
             onChange={(e) => setZoom(Number(e.target.value))}
             className="w-full accent-mustard"
+            disabled={!imageUrl || Boolean(loadError)}
           />
         </div>
 
@@ -131,7 +204,8 @@ export default function PhotoEditor({ file, onApply, onCancel }) {
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-1.5 rounded-full border-2 border-forest/15 px-3.5 py-2 font-mono text-xs font-bold text-ink/70 transition-colors duration-150 hover:border-forest/30 hover:text-ink"
+            disabled={!imageUrl || Boolean(loadError)}
+            className="flex items-center gap-1.5 rounded-full border-2 border-forest/15 px-3.5 py-2 font-mono text-xs font-bold text-ink/70 transition-colors duration-150 hover:border-forest/30 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             Reset
@@ -148,7 +222,12 @@ export default function PhotoEditor({ file, onApply, onCancel }) {
             <button
               type="button"
               onClick={handleApply}
-              disabled={isApplying || !croppedAreaPixels}
+              disabled={
+                isApplying ||
+                isLoadingImage ||
+                Boolean(loadError) ||
+                !croppedAreaPixels
+              }
               className="rounded-full bg-forest px-5 py-2 font-mono text-xs font-bold text-cream transition-colors duration-150 hover:bg-forest-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isApplying ? "Applying…" : "Apply"}

@@ -37,6 +37,8 @@ import HangingLogoStrip from "./HangingLogoStrip";
 
 import { getRoleTitle } from "../utils/roleTitles";
 
+import nightBackImg from "../assets/nightBack.jpg";
+
 export default function IDCardPreview({
   data,
   photoPreviewUrl,
@@ -1347,37 +1349,21 @@ export default function IDCardPreview({
 }
 
 /* =====================================================
-   CARD BACKGROUND SVG (Crisp Cyber Tropical Sunset)
+   CARD BACKGROUND (Night Beach Photo)
 ===================================================== */
 
 function CardBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
-      {/* Base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b] via-[#051c14] to-[#08291d]" />
-      
-      {/* Sunset Horizon Glow */}
-      <div className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full bg-gradient-to-tr from-[#ff9100] to-[#ffd000] opacity-40 blur-xl" />
-      <div className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full bg-[#ffd000] opacity-30 blur-lg" />
-      
-      {/* Palm Trees & Beach Silhouette SVG */}
-      <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 320 512" preserveAspectRatio="xMidYMid slice" fill="none">
-        {/* Palm tree left */}
-        <path d="M-10 240 Q40 190 60 110 Q50 90 20 80 Q60 70 80 100 Q90 60 50 40 Q100 40 100 80 Q120 50 140 70 Q110 90 80 110 Q120 180 80 260 Z" fill="#010a06" />
-        <path d="M-20 340 Q30 290 50 200 Q80 280 -10 360 Z" fill="#010a06" />
-        
-        {/* Palm tree right */}
-        <path d="M330 200 Q270 160 250 80 Q270 60 300 60 Q260 40 240 70 Q230 30 260 20 Q210 20 220 60 Q190 30 180 60 Q210 80 230 100 Q200 170 250 240 Z" fill="#010a06" />
-        <path d="M340 320 Q280 270 260 180 Q230 260 330 340 Z" fill="#010a06" />
+      {/* Night beach background image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${nightBackImg})` }}
+      />
 
-        {/* Shore & Waters */}
-        <path d="M0 380 Q100 370 200 400 T320 390 L320 512 L0 512 Z" fill="#020e08" />
-        <path d="M0 430 Q120 420 240 450 T320 440 L320 512 L0 512 Z" fill="#010805" />
-      </svg>
-      
       {/* Cyber Grid Dots Overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(#c8f526_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
-      
+
       {/* Dark vignette */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#03110b]/80 via-transparent to-[#03110b]/90" />
     </div>

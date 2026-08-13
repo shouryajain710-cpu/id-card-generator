@@ -1,7 +1,17 @@
 import { useState, useRef, useId } from "react";
 import { Upload, ImagePlus, Trash2, AlertCircle } from "lucide-react";
 
-const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "image/heic-sequence",
+  "image/heif-sequence",
+];
+
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 function formatFileSize(bytes) {
@@ -34,30 +44,49 @@ export default function PhotoUploader({
   const infoId = useId();
 
   const validateFile = (candidate) => {
-    if (!ACCEPTED_TYPES.includes(candidate.type)) {
-      return "Please upload a JPG, PNG, or WEBP image.";
+    const fileName = candidate.name?.toLowerCase() || "";
+    const fileType = candidate.type?.toLowerCase() || "";
+
+    const isAcceptedType = ACCEPTED_TYPES.includes(fileType);
+
+    const isAcceptedExtension =
+      fileName.endsWith(".jpg") ||
+      fileName.endsWith(".jpeg") ||
+      fileName.endsWith(".png") ||
+      fileName.endsWith(".webp") ||
+      fileName.endsWith(".heic") ||
+      fileName.endsWith(".heif");
+
+    if (!isAcceptedType && !isAcceptedExtension) {
+      return "Please upload a JPG, PNG, WEBP, or HEIC image.";
     }
+
     if (candidate.size > MAX_FILE_SIZE_BYTES) {
       return "Image must be smaller than 5 MB.";
     }
+
     return null;
   };
 
   const acceptFile = (candidate) => {
     const validationError = validateFile(candidate);
+
     if (validationError) {
       setError(validationError);
       return;
     }
+
     setError(null);
     onImageSelect?.(candidate);
   };
 
   const handleInputChange = (e) => {
     const selected = e.target.files?.[0];
+
     // Reset immediately so re-selecting the exact same file (e.g. after
     // Cancel in the editor) still fires a change event next time.
     e.target.value = "";
+
     if (selected) acceptFile(selected);
   };
 
@@ -73,8 +102,12 @@ export default function PhotoUploader({
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     dragCounter.current += 1;
-    if (e.dataTransfer.types?.includes("Files")) setIsDragging(true);
+
+    if (e.dataTransfer.types?.includes("Files")) {
+      setIsDragging(true);
+    }
   };
 
   const handleDragOver = (e) => {
@@ -85,7 +118,9 @@ export default function PhotoUploader({
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     dragCounter.current -= 1;
+
     if (dragCounter.current <= 0) {
       dragCounter.current = 0;
       setIsDragging(false);
@@ -95,15 +130,22 @@ export default function PhotoUploader({
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     dragCounter.current = 0;
     setIsDragging(false);
+
     const dropped = e.dataTransfer.files?.[0];
+
     if (dropped) acceptFile(dropped);
   };
 
   const handleRemove = () => {
     setError(null);
-    if (inputRef.current) inputRef.current.value = "";
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+
     onRemove?.();
   };
 
@@ -117,13 +159,14 @@ export default function PhotoUploader({
   return (
     <div className="w-full font-body">
       <label htmlFor={`photo-upload-${errorId}`} className="sr-only">
-        Upload profile photo (JPG, PNG, or WEBP, up to 5 MB)
+        Upload profile photo (JPG, PNG, WEBP, or HEIC, up to 5 MB)
       </label>
+
       <input
         ref={inputRef}
         id={`photo-upload-${errorId}`}
         type="file"
-        accept={ACCEPTED_TYPES.join(",")}
+        accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif"
         onChange={handleInputChange}
         className="sr-only"
       />
@@ -154,7 +197,9 @@ export default function PhotoUploader({
         >
           <Upload
             className={`h-6 w-6 shrink-0 transition-transform duration-200 ${
-              isDragging ? "scale-110 text-flamingo" : "text-mustard group-hover:-translate-y-0.5"
+              isDragging
+                ? "scale-110 text-flamingo"
+                : "text-mustard group-hover:-translate-y-0.5"
             }`}
             aria-hidden="true"
           />
@@ -163,8 +208,9 @@ export default function PhotoUploader({
             <p className="font-display text-base leading-none text-cream">
               {isDragging ? "Drop it here" : "Click or drag a photo"}
             </p>
+
             <p id={infoId} className="mt-1 font-mono text-[11px] text-cream/60">
-              JPG, PNG, WEBP &middot; up to 5MB
+              JPG, PNG, WEBP, HEIC &middot; up to 5MB
             </p>
           </div>
 
@@ -174,7 +220,10 @@ export default function PhotoUploader({
               role="alert"
               className="absolute -bottom-6 left-0 flex items-center gap-1.5 font-mono text-xs text-flamingo"
             >
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <AlertCircle
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
               <span>{error}</span>
             </div>
           )}
@@ -184,7 +233,11 @@ export default function PhotoUploader({
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-mustard/50 bg-forest-dark">
             <img
               src={previewUrl}
-              alt={fileName ? `Uploaded photo: ${fileName}` : "Uploaded profile photo"}
+              alt={
+                fileName
+                  ? `Uploaded photo: ${fileName}`
+                  : "Uploaded profile photo"
+              }
               className="h-full w-full object-cover"
             />
           </div>
@@ -193,9 +246,11 @@ export default function PhotoUploader({
             {fileName && (
               <p className="truncate font-mono text-[11px] text-cream/60">
                 {fileName}
-                {typeof fileSize === "number" && ` · ${formatFileSize(fileSize)}`}
+                {typeof fileSize === "number" &&
+                  ` · ${formatFileSize(fileSize)}`}
               </p>
             )}
+
             <button
               type="button"
               onClick={handleReplaceClick}

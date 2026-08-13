@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 
 import { QRCodeSVG } from "qrcode.react";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 
 import { formatName } from "../utils/formatName";
 
@@ -36,6 +36,8 @@ import {
 import HangingLogoStrip from "./HangingLogoStrip";
 
 import { getRoleTitle } from "../utils/roleTitles";
+
+import nightBackImg from "../assets/nightBack.jpg";
 
 export default function IDCardPreview({
   data,
@@ -1358,7 +1360,7 @@ export default function IDCardPreview({
               }`}
 
         </button>
-
+        <ShareToXButton/>
       </div>
 
     </div>
@@ -1366,33 +1368,18 @@ export default function IDCardPreview({
 }
 
 /* =====================================================
-   CARD BACKGROUND SVG (Crisp Cyber Tropical Sunset)
+   CARD BACKGROUND (Night Beach Photo)
 ===================================================== */
 
 function CardBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden z-0">
       {/* Base gradient */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          backgroundImage: "linear-gradient(to bottom, #03110b, #051c14, #08291d)"
-        }}
-      />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#03110b] via-[#051c14] to-[#08291d]" />
       
       {/* Sunset Horizon Glow */}
-      <div 
-        className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full opacity-40 blur-xl"
-        style={{
-          backgroundImage: "linear-gradient(135deg, #ff9100, #ffd000)"
-        }}
-      />
-      <div 
-        className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full opacity-30 blur-lg"
-        style={{
-          backgroundColor: "#ffd000"
-        }}
-      />
+      <div className="absolute right-[-10%] top-[32%] h-44 w-44 rounded-full bg-gradient-to-tr from-[#ff9100] to-[#ffd000] opacity-40 blur-xl" />
+      <div className="absolute right-[5%] top-[35%] h-28 w-28 rounded-full bg-[#ffd000] opacity-30 blur-lg" />
       
       {/* Palm Trees & Beach Silhouette SVG */}
       <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 320 512" preserveAspectRatio="xMidYMid slice" fill="none">
@@ -1410,13 +1397,7 @@ function CardBackground() {
       </svg>
       
       {/* Cyber Grid Dots Overlay */}
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: "radial-gradient(#c8f526 1px, transparent 1px)",
-          backgroundSize: "16px 16px"
-        }}
-      />
+      <div className="absolute inset-0 bg-[radial-gradient(#c8f526_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
       
       {/* Dark vignette */}
       <div 

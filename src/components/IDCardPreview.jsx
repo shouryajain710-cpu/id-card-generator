@@ -37,7 +37,7 @@ import HangingLogoStrip from "./HangingLogoStrip";
 import ShareToXButton from "./ShareToXButton";
 
 import { getRoleTitle } from "../utils/roleTitles";
-import { canvasToHeicBlob } from "../utils/encodeHeic";
+import { canvasToHeicBlob, preloadHeicEncoder } from "../utils/encodeHeic";
 
 import nightBackImg from "../assets/nightBack.jpg";
 
@@ -50,6 +50,12 @@ export default function IDCardPreview({
 
   const [isDownloading, setIsDownloading] =
     useState(false);
+
+  useEffect(() => {
+    if (downloadFormat === "heic") {
+      preloadHeicEncoder();
+    }
+  }, [downloadFormat]);
 
   const [animationKey, setAnimationKey] =
     useState(0);
@@ -588,7 +594,10 @@ export default function IDCardPreview({
   ===================================================== */
 
   const exportCardToCanvas =
-    async (element) => {
+    async (
+      element,
+      { scale = 3 } = {}
+    ) => {
       if (!element) {
         throw new Error(
           "Card element not found."
@@ -631,7 +640,7 @@ export default function IDCardPreview({
           {
             window:
               iframe.contentWindow,
-            scale: 3,
+            scale,
             backgroundColor:
               "#041610",
             allowTaint: true,
@@ -729,6 +738,11 @@ export default function IDCardPreview({
             ? downloadCanvasAsHeic
             : downloadCanvasAsPng;
 
+        const exportScale =
+          downloadFormat === "heic"
+            ? 2
+            : 3;
+
         const canvas =
           await exportCardToCanvas(
             getExportElement(
@@ -736,7 +750,8 @@ export default function IDCardPreview({
               side === "back"
                 ? { skip3dWrapper: true }
                 : undefined
-            )
+            ),
+            { scale: exportScale }
           );
 
         await downloadCanvas(

@@ -5,6 +5,7 @@ import {
   heicFileToJpegFile,
   isHeicFile,
 } from "../utils/decodeHeic";
+import { preloadHeicEncoder } from "../utils/encodeHeic";
 
 const DESIGNATION_PRESETS = [
   { label: "Web Developer", value: "Web Developer" },
@@ -42,6 +43,7 @@ export default function IDCardForm({
 
     if (isHeicFile(file)) {
       onUploadFormatChange?.("heic");
+      preloadHeicEncoder();
       setIsPreparingPhoto(true);
 
       try {

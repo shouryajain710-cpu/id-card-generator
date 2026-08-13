@@ -5,40 +5,54 @@ import {
   animate,
   useReducedMotion,
 } from "framer-motion";
+
 import {
   User,
   Briefcase,
   Building2,
-  CreditCard,
   QrCode,
   Download,
+  CreditCard,
 } from "lucide-react";
+
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
-import ShareToXButton from "./ShareToXButton.jsx";
+
 import { formatName } from "../utils/formatName";
+
 import {
   HH_GOA_WEBSITE_URL,
   HH_GOA_WEBSITE_LABEL,
   HH_GOA_BLURB,
 } from "../utils/hhGoaConfig";
+
 import HangingLogoStrip from "./HangingLogoStrip";
+
+import { getRoleTitle } from "../utils/roleTitles";
 
 export default function IDCardPreview({
   data,
   photoPreviewUrl,
 }) {
   const [side, setSide] = useState("front");
-  const [downloadSide, setDownloadSide] = useState("front");
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [animationKey, setAnimationKey] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
+  const [downloadSide, setDownloadSide] =
+    useState("front");
+
+  const [isDownloading, setIsDownloading] =
+    useState(false);
+
+  const [animationKey, setAnimationKey] =
+    useState(0);
+
+  const [isHovering, setIsHovering] =
+    useState(false);
 
   const frontRef = useRef(null);
   const backRef = useRef(null);
   const cardAreaRef = useRef(null);
 
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion =
+    useReducedMotion();
 
   /* =====================================================
      3D CARD MOTION
@@ -47,17 +61,14 @@ export default function IDCardPreview({
   const rotateY = useMotionValue(0);
   const rotateX = useMotionValue(0);
 
-  /*
-   * Gentle idle floating.
-   */
   const floatY = useMotionValue(0);
   const floatRotate = useMotionValue(0);
 
-  /*
-   * Mouse-follow tilt.
-   */
-  const cursorRotateX = useMotionValue(0);
-  const cursorRotateY = useMotionValue(0);
+  const cursorRotateX =
+    useMotionValue(0);
+
+  const cursorRotateY =
+    useMotionValue(0);
 
   const dragMeta = useRef({
     dragging: false,
@@ -72,14 +83,15 @@ export default function IDCardPreview({
     moved: 0,
   });
 
-  const springConfig = prefersReducedMotion
-    ? { duration: 0 }
-    : {
-        type: "spring",
-        stiffness: 140,
-        damping: 18,
-        mass: 0.9,
-      };
+  const springConfig =
+    prefersReducedMotion
+      ? { duration: 0 }
+      : {
+          type: "spring",
+          stiffness: 140,
+          damping: 18,
+          mass: 0.9,
+        };
 
   /* =====================================================
      FLOATING ANIMATION
@@ -141,7 +153,10 @@ export default function IDCardPreview({
      SETTLE CARD
   ===================================================== */
 
-  const settleTo = (target, nextSide) => {
+  const settleTo = (
+    target,
+    nextSide
+  ) => {
     animate(
       rotateY,
       target,
@@ -187,9 +202,10 @@ export default function IDCardPreview({
      FORM DATA
   ===================================================== */
 
-  const fullName = data.fullName?.trim()
-    ? formatName(data.fullName)
-    : "Your Name";
+  const fullName =
+    data.fullName?.trim()
+      ? formatName(data.fullName)
+      : "Your Name";
 
   const designation =
     data.designation?.trim() ||
@@ -202,110 +218,123 @@ export default function IDCardPreview({
   const department =
     data.department?.trim() || "";
 
+  /*
+   * UNIQUE HH GOA TITLE
+   */
+  const roleTitle =
+    getRoleTitle(
+      data.designation
+    );
+
   /* =====================================================
      CURSOR TILT
   ===================================================== */
 
-  const handlePointerEnter = () => {
-    if (prefersReducedMotion) {
-      return;
-    }
-
-    setIsHovering(true);
-  };
-
-  const handlePointerMoveOnCard = (event) => {
-    if (prefersReducedMotion) {
-      return;
-    }
-
-    const meta =
-      dragMeta.current;
-
-    /*
-     * Dragging has priority over mouse tilt.
-     */
-    if (meta.dragging) {
-      return;
-    }
-
-    const element =
-      cardAreaRef.current;
-
-    if (!element) {
-      return;
-    }
-
-    const rect =
-      element.getBoundingClientRect();
-
-    const x =
-      event.clientX - rect.left;
-
-    const y =
-      event.clientY - rect.top;
-
-    /*
-     * Convert cursor position to
-     * approximately -1 ... +1.
-     */
-    const normalizedX =
-      (x / rect.width) * 2 - 1;
-
-    const normalizedY =
-      (y / rect.height) * 2 - 1;
-
-    /*
-     * Keep the effect subtle.
-     */
-    const targetRotateY =
-      normalizedX * 7;
-
-    const targetRotateX =
-      normalizedY * -5;
-
-    animate(
-      cursorRotateY,
-      targetRotateY,
-      {
-        type: "spring",
-        stiffness: 240,
-        damping: 24,
-        mass: 0.5,
+  const handlePointerEnter =
+    () => {
+      if (
+        prefersReducedMotion
+      ) {
+        return;
       }
-    );
 
-    animate(
-      cursorRotateX,
-      targetRotateX,
-      {
-        type: "spring",
-        stiffness: 240,
-        damping: 24,
-        mass: 0.5,
+      setIsHovering(true);
+    };
+
+  const handlePointerMoveOnCard =
+    (event) => {
+      if (
+        prefersReducedMotion
+      ) {
+        return;
       }
-    );
-  };
 
-  const handlePointerLeave = () => {
-    setIsHovering(false);
+      const meta =
+        dragMeta.current;
 
-    if (prefersReducedMotion) {
-      return;
-    }
+      if (meta.dragging) {
+        return;
+      }
 
-    animate(
-      cursorRotateX,
-      0,
-      springConfig
-    );
+      const element =
+        cardAreaRef.current;
 
-    animate(
-      cursorRotateY,
-      0,
-      springConfig
-    );
-  };
+      if (!element) {
+        return;
+      }
+
+      const rect =
+        element.getBoundingClientRect();
+
+      const x =
+        event.clientX -
+        rect.left;
+
+      const y =
+        event.clientY -
+        rect.top;
+
+      const normalizedX =
+        (x / rect.width) *
+          2 -
+        1;
+
+      const normalizedY =
+        (y / rect.height) *
+          2 -
+        1;
+
+      const targetRotateY =
+        normalizedX * 7;
+
+      const targetRotateX =
+        normalizedY * -5;
+
+      animate(
+        cursorRotateY,
+        targetRotateY,
+        {
+          type: "spring",
+          stiffness: 240,
+          damping: 24,
+          mass: 0.5,
+        }
+      );
+
+      animate(
+        cursorRotateX,
+        targetRotateX,
+        {
+          type: "spring",
+          stiffness: 240,
+          damping: 24,
+          mass: 0.5,
+        }
+      );
+    };
+
+  const handlePointerLeave =
+    () => {
+      setIsHovering(false);
+
+      if (
+        prefersReducedMotion
+      ) {
+        return;
+      }
+
+      animate(
+        cursorRotateX,
+        0,
+        springConfig
+      );
+
+      animate(
+        cursorRotateY,
+        0,
+        springConfig
+      );
+    };
 
   /* =====================================================
      FLIP
@@ -323,512 +352,485 @@ export default function IDCardPreview({
     );
   };
 
-  const handleCardKeyDown = (event) => {
-    if (
-      event.key === "Enter" ||
-      event.key === " "
-    ) {
-      event.preventDefault();
+  const handleCardKeyDown =
+    (event) => {
+      if (
+        event.key === "Enter" ||
+        event.key === " "
+      ) {
+        event.preventDefault();
+        handleFlip();
+      }
+    };
+
+  const handleBackButton =
+    () => {
       handleFlip();
-    }
-  };
+    };
 
-  const handleBackButton = () => {
-    handleFlip();
-  };
+  const handleFlatButton =
+    () => {
+      const current =
+        rotateY.get();
 
-  const handleFlatButton = () => {
-    const current =
-      rotateY.get();
+      const nearestSameFace =
+        Math.round(
+          current / 360
+        ) * 360;
 
-    const nearestSameFace =
-      Math.round(
-        current / 360
-      ) * 360;
-
-    settleTo(
-      nearestSameFace,
-      side
-    );
-  };
+      settleTo(
+        nearestSameFace,
+        side
+      );
+    };
 
   /* =====================================================
      DRAG TO SPIN
   ===================================================== */
 
-  const handlePointerDown = (event) => {
-    const meta =
-      dragMeta.current;
+  const handlePointerDown =
+    (event) => {
+      const meta =
+        dragMeta.current;
 
-    meta.dragging = true;
-    meta.pointerId =
-      event.pointerId;
+      meta.dragging = true;
 
-    meta.startX =
-      event.clientX;
+      meta.pointerId =
+        event.pointerId;
 
-    meta.startY =
-      event.clientY;
+      meta.startX =
+        event.clientX;
 
-    meta.startRotateY =
-      rotateY.get();
+      meta.startY =
+        event.clientY;
 
-    meta.startRotateX =
-      rotateX.get();
+      meta.startRotateY =
+        rotateY.get();
 
-    meta.lastX =
-      event.clientX;
+      meta.startRotateX =
+        rotateX.get();
 
-    meta.lastT =
-      performance.now();
+      meta.lastX =
+        event.clientX;
 
-    meta.velocity = 0;
-    meta.moved = 0;
+      meta.lastT =
+        performance.now();
 
-    /*
-     * Remove cursor tilt while dragging.
-     */
-    cursorRotateX.set(0);
-    cursorRotateY.set(0);
+      meta.velocity = 0;
+      meta.moved = 0;
 
-    event.currentTarget.setPointerCapture?.(
-      event.pointerId
-    );
-  };
+      cursorRotateX.set(0);
+      cursorRotateY.set(0);
 
-  const handlePointerMove = (event) => {
-    const meta =
-      dragMeta.current;
+      event.currentTarget.setPointerCapture?.(
+        event.pointerId
+      );
+    };
 
-    if (
-      !meta.dragging ||
-      event.pointerId !==
-        meta.pointerId
-    ) {
-      return;
-    }
+  const handlePointerMove =
+    (event) => {
+      const meta =
+        dragMeta.current;
 
-    const deltaX =
-      event.clientX -
-      meta.startX;
+      if (
+        !meta.dragging ||
+        event.pointerId !==
+          meta.pointerId
+      ) {
+        return;
+      }
 
-    const deltaY =
-      event.clientY -
-      meta.startY;
+      const deltaX =
+        event.clientX -
+        meta.startX;
 
-    meta.moved = Math.max(
-      meta.moved,
-      Math.abs(deltaX),
-      Math.abs(deltaY)
-    );
+      const deltaY =
+        event.clientY -
+        meta.startY;
 
-    rotateY.set(
-      meta.startRotateY +
-        deltaX * 0.6
-    );
+      meta.moved =
+        Math.max(
+          meta.moved,
+          Math.abs(deltaX),
+          Math.abs(deltaY)
+        );
 
-    rotateX.set(
-      Math.max(
-        -12,
-        Math.min(
-          12,
-          meta.startRotateX -
-            deltaY * 0.12
+      rotateY.set(
+        meta.startRotateY +
+          deltaX * 0.6
+      );
+
+      rotateX.set(
+        Math.max(
+          -12,
+          Math.min(
+            12,
+            meta.startRotateX -
+              deltaY * 0.12
+          )
         )
-      )
-    );
+      );
 
-    const now =
-      performance.now();
+      const now =
+        performance.now();
 
-    const dt =
-      now - meta.lastT;
+      const dt =
+        now - meta.lastT;
 
-    if (dt > 0) {
-      meta.velocity =
-        (event.clientX -
-          meta.lastX) /
-        dt;
-    }
+      if (dt > 0) {
+        meta.velocity =
+          (event.clientX -
+            meta.lastX) /
+          dt;
+      }
 
-    meta.lastX =
-      event.clientX;
+      meta.lastX =
+        event.clientX;
 
-    meta.lastT =
-      now;
-  };
+      meta.lastT =
+        now;
+    };
 
-  const handlePointerUp = (event) => {
-    const meta =
-      dragMeta.current;
+  const handlePointerUp =
+    (event) => {
+      const meta =
+        dragMeta.current;
 
-    if (
-      !meta.dragging ||
-      event.pointerId !==
+      if (
+        !meta.dragging ||
+        event.pointerId !==
+          meta.pointerId
+      ) {
+        return;
+      }
+
+      meta.dragging = false;
+
+      event.currentTarget.releasePointerCapture?.(
         meta.pointerId
-    ) {
-      return;
-    }
+      );
 
-    meta.dragging = false;
+      if (
+        meta.moved < 6
+      ) {
+        handleFlip();
+        return;
+      }
 
-    event.currentTarget.releasePointerCapture?.(
-      meta.pointerId
-    );
+      const flicked =
+        rotateY.get() +
+        meta.velocity * 140;
 
-    /*
-     * Tiny movement = tap.
-     */
-    if (meta.moved < 6) {
-      handleFlip();
-      return;
-    }
+      const nearest =
+        Math.round(
+          flicked / 180
+        ) * 180;
 
-    /*
-     * Add momentum based on release velocity.
-     */
-    const flicked =
-      rotateY.get() +
-      meta.velocity * 140;
+      const normalized =
+        ((nearest % 360) +
+          360) %
+        360;
 
-    /*
-     * Snap to the nearest readable face.
-     */
-    const nearest =
-      Math.round(
-        flicked / 180
-      ) * 180;
+      const nextSide =
+        normalized === 180
+          ? "back"
+          : "front";
 
-    const normalized =
-      ((nearest % 360) + 360) %
-      360;
-
-    const nextSide =
-      normalized === 180
-        ? "back"
-        : "front";
-
-    settleTo(
-      nearest,
-      nextSide
-    );
-  };
+      settleTo(
+        nearest,
+        nextSide
+      );
+    };
 
   /* =====================================================
      FILE NAME
   ===================================================== */
 
-  const getBaseFileName = () => {
-    const safeName =
-      fullName
-        .replace(
-          /[^a-zA-Z0-9]+/g,
-          "-"
-        )
-        .replace(
-          /^-+|-+$/g,
-          ""
-        );
+  const getBaseFileName =
+    () => {
+      const safeName =
+        fullName
+          .replace(
+            /[^a-zA-Z0-9]+/g,
+            "-"
+          )
+          .replace(
+            /^-+|-+$/g,
+            ""
+          );
 
-    if (
-      !safeName ||
-      safeName === "Your-Name"
-    ) {
-      return "HHGOA-2026-ID-Card";
-    }
+      if (
+        !safeName ||
+        safeName ===
+          "Your-Name"
+      ) {
+        return "HHGOA-2026-ID-Card";
+      }
 
-    return (
-      "HHGOA-2026-" +
-      safeName
-    );
-  };
+      return (
+        "HHGOA-2026-" +
+        safeName
+      );
+    };
 
   /* =====================================================
      EXPORT CARD
   ===================================================== */
 
-  const exportCard = async (
-    element
-  ) => {
-    if (!element) {
-      throw new Error(
-        "Card element not found."
-      );
-    }
+  const exportCard =
+    async (element) => {
+      if (!element) {
+        throw new Error(
+          "Card element not found."
+        );
+      }
 
-    /*
-     * Clone the card so the live
-     * preview is not disturbed.
-     */
-    const clone =
-      element.cloneNode(true);
+      const clone =
+        element.cloneNode(true);
 
-    /*
-     * Remove preview transforms.
-     */
-    clone.style.transform =
-      "none";
+      clone.style.transform =
+        "none";
 
-    clone.style.position =
-      "relative";
+      clone.style.position =
+        "relative";
 
-    clone.style.inset =
-      "auto";
+      clone.style.inset =
+        "auto";
 
-    clone.style.width =
-      `${element.offsetWidth}px`;
+      clone.style.width =
+        `${element.offsetWidth}px`;
 
-    clone.style.height =
-      `${element.offsetHeight}px`;
+      clone.style.height =
+        `${element.offsetHeight}px`;
 
-    clone.style.backfaceVisibility =
-      "visible";
+      clone.style.backfaceVisibility =
+        "visible";
 
-    clone.style.webkitBackfaceVisibility =
-      "visible";
+      clone.style.webkitBackfaceVisibility =
+        "visible";
 
-    /*
-     * Invisible export container.
-     */
-    const container =
-      document.createElement(
-        "div"
-      );
+      const container =
+        document.createElement(
+          "div"
+        );
 
-    container.style.position =
-      "fixed";
+      container.style.position =
+        "fixed";
 
-    container.style.left =
-      "-100000px";
+      container.style.left =
+        "-100000px";
 
-    container.style.top =
-      "0";
+      container.style.top =
+        "0";
 
-    container.style.width =
-      `${element.offsetWidth}px`;
+      container.style.width =
+        `${element.offsetWidth}px`;
 
-    container.style.height =
-      `${element.offsetHeight}px`;
+      container.style.height =
+        `${element.offsetHeight}px`;
 
-    container.style.overflow =
-      "hidden";
+      container.style.overflow =
+        "hidden";
 
-    container.style.pointerEvents =
-      "none";
+      container.style.pointerEvents =
+        "none";
 
-    container.style.zIndex =
-      "-1";
+      container.style.zIndex =
+        "-1";
 
-    container.appendChild(
-      clone
-    );
-
-    document.body.appendChild(
-      container
-    );
-
-    try {
-      await waitForImages(
+      container.appendChild(
         clone
       );
 
-      const dataUrl =
-        await toPng(
-          clone,
-          {
-            pixelRatio: 3,
-            cacheBust: true,
-            backgroundColor:
-              "#1B4332",
-            width:
-              element.offsetWidth,
-            height:
-              element.offsetHeight,
-          }
-        );
-
-      return dataUrl;
-    } finally {
-      document.body.removeChild(
+      document.body.appendChild(
         container
       );
-    }
-  };
+
+      try {
+        await waitForImages(
+          clone
+        );
+
+        const dataUrl =
+          await toPng(
+            clone,
+            {
+              pixelRatio: 3,
+              cacheBust: true,
+              backgroundColor:
+                "#1B4332",
+              width:
+                element.offsetWidth,
+              height:
+                element.offsetHeight,
+            }
+          );
+
+        return dataUrl;
+      } finally {
+        document.body.removeChild(
+          container
+        );
+      }
+    };
 
   /* =====================================================
      DOWNLOAD
   ===================================================== */
 
-  const handleDownload = async () => {
-    if (isDownloading) {
-      return;
-    }
-
-    setIsDownloading(true);
-
-    try {
-      const baseName =
-        getBaseFileName();
-
-      /*
-       * FRONT
-       */
-      if (
-        downloadSide ===
-        "front"
-      ) {
-        const dataUrl =
-          await exportCard(
-            frontRef.current
-          );
-
-        downloadDataUrl(
-          dataUrl,
-          `${baseName}-front.png`
-        );
-
+  const handleDownload =
+    async () => {
+      if (isDownloading) {
         return;
       }
 
-      /*
-       * BACK
-       */
-      if (
-        downloadSide ===
-        "back"
-      ) {
-        const dataUrl =
-          await exportCard(
-            backRef.current
+      setIsDownloading(true);
+
+      try {
+        const baseName =
+          getBaseFileName();
+
+        if (
+          downloadSide ===
+          "front"
+        ) {
+          const dataUrl =
+            await exportCard(
+              frontRef.current
+            );
+
+          downloadDataUrl(
+            dataUrl,
+            `${baseName}-front.png`
           );
 
-        downloadDataUrl(
-          dataUrl,
-          `${baseName}-back.png`
-        );
-
-        return;
-      }
-
-      /*
-       * BOTH
-       */
-      if (
-        downloadSide ===
-        "both"
-      ) {
-        const frontDataUrl =
-          await exportCard(
-            frontRef.current
-          );
-
-        const backDataUrl =
-          await exportCard(
-            backRef.current
-          );
-
-        const frontImage =
-          await loadImage(
-            frontDataUrl
-          );
-
-        const backImage =
-          await loadImage(
-            backDataUrl
-          );
-
-        const gap = 60;
-
-        const canvasWidth =
-          frontImage.width +
-          backImage.width +
-          gap;
-
-        const canvasHeight =
-          Math.max(
-            frontImage.height,
-            backImage.height
-          );
-
-        const canvas =
-          document.createElement(
-            "canvas"
-          );
-
-        canvas.width =
-          canvasWidth;
-
-        canvas.height =
-          canvasHeight;
-
-        const ctx =
-          canvas.getContext(
-            "2d"
-          );
-
-        if (!ctx) {
-          throw new Error(
-            "Could not create canvas context."
-          );
+          return;
         }
 
-        /*
-         * Background.
-         */
-        ctx.fillStyle =
-          "#FBF3DD";
+        if (
+          downloadSide ===
+          "back"
+        ) {
+          const dataUrl =
+            await exportCard(
+              backRef.current
+            );
 
-        ctx.fillRect(
-          0,
-          0,
-          canvasWidth,
-          canvasHeight
-        );
-
-        /*
-         * Front card.
-         */
-        ctx.drawImage(
-          frontImage,
-          0,
-          (
-            canvasHeight -
-            frontImage.height
-          ) / 2
-        );
-
-        /*
-         * Back card.
-         */
-        ctx.drawImage(
-          backImage,
-          frontImage.width +
-            gap,
-          (
-            canvasHeight -
-            backImage.height
-          ) / 2
-        );
-
-        const combinedDataUrl =
-          canvas.toDataURL(
-            "image/png"
+          downloadDataUrl(
+            dataUrl,
+            `${baseName}-back.png`
           );
 
-        downloadDataUrl(
-          combinedDataUrl,
-          `${baseName}-both.png`
+          return;
+        }
+
+        if (
+          downloadSide ===
+          "both"
+        ) {
+          const frontDataUrl =
+            await exportCard(
+              frontRef.current
+            );
+
+          const backDataUrl =
+            await exportCard(
+              backRef.current
+            );
+
+          const frontImage =
+            await loadImage(
+              frontDataUrl
+            );
+
+          const backImage =
+            await loadImage(
+              backDataUrl
+            );
+
+          const gap = 60;
+
+          const canvasWidth =
+            frontImage.width +
+            backImage.width +
+            gap;
+
+          const canvasHeight =
+            Math.max(
+              frontImage.height,
+              backImage.height
+            );
+
+          const canvas =
+            document.createElement(
+              "canvas"
+            );
+
+          canvas.width =
+            canvasWidth;
+
+          canvas.height =
+            canvasHeight;
+
+          const ctx =
+            canvas.getContext(
+              "2d"
+            );
+
+          if (!ctx) {
+            throw new Error(
+              "Could not create canvas context."
+            );
+          }
+
+          ctx.fillStyle =
+            "#FBF3DD";
+
+          ctx.fillRect(
+            0,
+            0,
+            canvasWidth,
+            canvasHeight
+          );
+
+          ctx.drawImage(
+            frontImage,
+            0,
+            (
+              canvasHeight -
+              frontImage.height
+            ) / 2
+          );
+
+          ctx.drawImage(
+            backImage,
+            frontImage.width +
+              gap,
+            (
+              canvasHeight -
+              backImage.height
+            ) / 2
+          );
+
+          const combinedDataUrl =
+            canvas.toDataURL(
+              "image/png"
+            );
+
+          downloadDataUrl(
+            combinedDataUrl,
+            `${baseName}-both.png`
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to download ID card:",
+          error
         );
+      } finally {
+        setIsDownloading(false);
       }
-    } catch (error) {
-      console.error(
-        "Failed to download ID card:",
-        error
-      );
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+    };
 
   /* =====================================================
      RENDER
@@ -837,9 +839,7 @@ export default function IDCardPreview({
   return (
     <div className="flex w-full flex-col items-center">
 
-      {/* =========================================
-          SPIN CONTROLS
-      ========================================== */}
+      {/* SPIN CONTROLS */}
 
       <div className="mb-3 flex w-full max-w-xs items-center justify-between gap-2">
 
@@ -860,7 +860,7 @@ export default function IDCardPreview({
               ? "FRONT"
               : "BACK"}
           </button>
-          
+
           <button
             type="button"
             onClick={
@@ -875,9 +875,7 @@ export default function IDCardPreview({
 
       </div>
 
-      {/* =========================================
-          CARD + LANYARD
-      ========================================== */}
+      {/* CARD + LANYARD */}
 
       <div
         key={animationKey}
@@ -897,9 +895,7 @@ export default function IDCardPreview({
           strapHeight="clamp(6rem,16vh,11rem)"
         />
 
-        {/* =====================================
-            INTERACTIVE CARD AREA
-        ====================================== */}
+        {/* INTERACTIVE CARD AREA */}
 
         <div
           ref={cardAreaRef}
@@ -946,9 +942,7 @@ export default function IDCardPreview({
           "
         >
 
-          {/* ===================================
-              FLOATING 3D CARD
-          ==================================== */}
+          {/* FLOATING 3D CARD */}
 
           <motion.div
             style={{
@@ -984,9 +978,7 @@ export default function IDCardPreview({
             "
           >
 
-            {/* =================================
-                FRONT
-            ================================== */}
+            {/* FRONT */}
 
             <div
               ref={frontRef}
@@ -1024,15 +1016,16 @@ export default function IDCardPreview({
                   photoPreviewUrl={
                     photoPreviewUrl
                   }
+                  roleTitle={
+                    roleTitle
+                  }
                 />
 
               </div>
 
             </div>
 
-            {/* =================================
-                BACK
-            ================================== */}
+            {/* BACK */}
 
             <div
               ref={backRef}
@@ -1067,9 +1060,7 @@ export default function IDCardPreview({
 
       </div>
 
-      {/* =========================================
-          CARD ANIMATIONS
-      ========================================== */}
+      {/* CARD ANIMATIONS */}
 
       <style>{`
         .id-card-hanging-rig {
@@ -1176,21 +1167,15 @@ export default function IDCardPreview({
         }
       `}</style>
 
-      {/* =========================================
-          HINT
-      ========================================== */}
+      {/* HINT */}
 
       <p className="mt-3 font-mono text-[10px] tracking-widest text-ink/40">
         DRAG TO SPIN · MOVE TO TILT · TAP TO FLIP
       </p>
 
-      {/* =========================================
-          DOWNLOAD CONTROLS
-      ========================================== */}
+      {/* DOWNLOAD CONTROLS */}
 
       <div className="mt-5 flex flex-col items-center gap-3">
-
-        {/* FRONT / BACK / BOTH */}
 
         <div
           className="
@@ -1300,8 +1285,6 @@ export default function IDCardPreview({
 
         </div>
 
-        {/* DOWNLOAD */}
-
         <button
           type="button"
           onClick={
@@ -1349,7 +1332,7 @@ export default function IDCardPreview({
               }`}
 
         </button>
-        <ShareToXButton />
+
       </div>
 
     </div>
@@ -1366,6 +1349,7 @@ function FrontFace({
   idNumber,
   department,
   photoPreviewUrl,
+  roleTitle,
 }) {
   return (
     <div className="relative h-full w-full">
@@ -1497,6 +1481,7 @@ function FrontFace({
           className="
             mt-2
             inline-flex
+            max-w-full
             items-center
             gap-1.5
             rounded-full
@@ -1511,13 +1496,53 @@ function FrontFace({
         >
 
           <Briefcase
-            className="h-3 w-3"
+            className="h-3 w-3 shrink-0"
             aria-hidden="true"
           />
 
-          {designation}
+          <span className="truncate">
+            {designation}
+          </span>
 
         </span>
+
+        {/* UNIQUE HH GOA TITLE */}
+
+        {roleTitle && (
+          <div
+            className="
+              mt-3
+              w-full
+              text-center
+            "
+          >
+
+            <p
+              className="
+                font-mono
+                text-[7px]
+                font-bold
+                tracking-[0.22em]
+                text-flamingo
+              "
+            >
+              HH GOA TITLE
+            </p>
+
+            <p
+              className="
+                mt-1
+                font-graffiti
+                text-[11px]
+                leading-tight
+                text-mustard
+              "
+            >
+              {roleTitle.title}
+            </p>
+
+          </div>
+        )}
 
       </div>
 
@@ -1525,7 +1550,7 @@ function FrontFace({
 
       <div
         className="
-          mt-6
+          mt-4
           space-y-2.5
           border-t
           border-cream/10
@@ -1863,6 +1888,7 @@ function downloadDataUrl(
     );
 
   link.href = dataUrl;
+
   link.download =
     filename;
 

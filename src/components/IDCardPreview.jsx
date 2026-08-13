@@ -24,7 +24,7 @@ import {
 
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
-
+import ShareToXButton from "./ShareToXButton"
 import { formatName } from "../utils/formatName";
 
 import {
@@ -1341,7 +1341,7 @@ export default function IDCardPreview({
               }`}
 
         </button>
-
+        <ShareToXButton/>
       </div>
 
     </div>

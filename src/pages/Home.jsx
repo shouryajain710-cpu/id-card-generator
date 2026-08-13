@@ -27,22 +27,18 @@ export default function Home() {
 
             </div>
 
-            <h1 className="font-display text-[clamp(4rem,10vw,9rem)] leading-[0.82] tracking-tight text-cream">
+            <h1 className="relative font-display text-[clamp(4rem,10vw,9rem)] leading-[0.82] tracking-tight text-cream">
+  HACKER
+  <br />
 
-              HACKER
+  <span className="text-mustard">
+    HOUSE
+  </span>
 
-              <br />
-
-              <span className="text-mustard">
-                HOUSE
-              </span>
-
-              <span className="text-flamingo">
-                {" "}GOA
-              </span>
-
-            </h1>
-
+  <span className="goa-sticker">
+    GOA
+  </span>
+</h1>
             <p className="mt-10 max-w-xl font-body text-lg font-semibold leading-8 text-cream/90">
               Create your official Hacker House Goa 2026
               digital identity. Upload your photo, enter your
@@ -155,7 +151,7 @@ export default function Home() {
           </div>
 
 
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="step-cards grid gap-5 md:grid-cols-3">
 
             <Step
               number="01"
